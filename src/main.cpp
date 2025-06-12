@@ -2,6 +2,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <cstdlib>
+#include "Inicializador.hpp"
 
 using namespace std;
 
@@ -19,7 +20,15 @@ void imprimirMenu();
 int lerInteiro();
 int main()
 {
-    
+    try
+    {
+        InicializadorSistema iniciar;
+        iniciar.start();
+    }
+    catch(const exception& erroLeituraConversao)
+    {
+        cerr << erroLeituraConversao.what() << '\n';
+    }
     int comando = -1;
     bool encerrarPrograma = false;
     try
@@ -58,9 +67,9 @@ int main()
             }
         } while (!encerrarPrograma);
     }
-    catch (const std::exception &e)
+    catch (const std::exception &erroEmOperacaoBin)
     {
-        cout << e.what() << '\n';
+        cout << erroEmOperacaoBin.what() << '\n';
     }
     return 0;
 }

@@ -10,15 +10,18 @@ add_executable(
     src/components/ArquivoManager.cpp
     src/components/Buffer.cpp
     src/components/Inicializador.cpp
-    src/leitura-conversao/ConversorTextoBin.cpp
-    src/leitura-conversao/LeitorAquivosCSV.cpp
     src/ordenacao/OrdenacaoDecrescente.cpp
+    src/components/type_block.cpp
+    src/components/type_dado.cpp
     src/main.cpp
+    src/conversao-segmentacao/SegmentadorBin.cpp
+    src/conversao-segmentacao/SegmentadorCSV.cpp
 )
 
 
 # Adiciona o diretório 'include' ao caminho de busca por arquivos .h/.hpp
 target_include_directories(${PROJECT_NAME} PUBLIC headers)
+target_include_directories(${PROJECT_NAME} PUBLIC protocolos)
 
 
 # Adiciona flags de compilação que o compilador normalmente ignora.

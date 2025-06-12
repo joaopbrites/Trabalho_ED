@@ -4,7 +4,7 @@
 #ifndef ARQUIVO_HPP
 #define ARQUIVO_HPP
 
-#include <iostream>
+#include <string>
 
 using namespace std;
 

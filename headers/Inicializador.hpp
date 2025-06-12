@@ -4,15 +4,16 @@
 #define INICIALIZADOR_SISTEMA_HPP
 
 
-#include <iostream>
-#include <fstream>
+#include <string>
+
+
 
 using namespace std;
 
 class InicializadorSistema
 {
 private:
-    ifstream arquivoLeitura;
+    string arquivoLeitura;
     void lerTemp();
     void converta();
     void ordenarArquivoDecrescente(); // converta a base sorteada para o grupo no Campus Virtual em arquivo binário
@@ -20,6 +21,8 @@ private:
     void view();
 public:
     InicializadorSistema();
+    ~InicializadorSistema();
+    void start();
 };
 
 #endif
