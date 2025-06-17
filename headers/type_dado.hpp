@@ -5,7 +5,8 @@
 
 #include "cabecalhoDado.hpp"
 #include <string>
-#include <config.hpp>
+#include "config.hpp"
+#include "Logger.hpp"
 
 using namespace std;
 
@@ -22,15 +23,27 @@ private:
     char subject[REGRAS::TAMANHO_CAMPO_REG];
     char group[REGRAS::TAMANHO_CAMPO_REG];
     char series_title[4][REGRAS::TAMANHO_CAMPO_REG];
+    Logger* log;
+
     bool copiarString(char *destino, const string &origem);
 
 public:
-    Registro(float pChave);
     Registro();
+    Registro(float pChave, Logger *pLog);
     void desserializar(const char *buffer);
     float getChavePrimaria() const;
-    string gerarStringImpressão() const;
+    string gerarStringImpressao() const;
     uint8_t getStatus() const;
+    void serializar(char* destino) const;
+    void setReference(const string &pReference);
+    void setDataValue(float pData);
+    void setStatus(const float &pStatus);
+    void setUnits(const string &pUnits);
+    void setMagnitude(int pMagnitude);
+    void setSubject(const string &pSubject);
+    void setGroup(const string &pGroup);
+    void setTitle(string pTitles[]);
+
     static constexpr size_t sizeofRegistro()
     {
         size_t tamanhoRegistro = sizeof(cabecalhoParaRegistro) +
@@ -45,15 +58,6 @@ public:
                                  (4 * REGRAS::TAMANHO_CAMPO_REG);
         return tamanhoRegistro;
     }
-
-    void setReference(const string &pReference);
-    void setDataValue(float pData);
-    void setStatus(const float &pStatus);
-    void setUnits(const string &pUnits);
-    void setMagnitude(int pMagnitude);
-    void setSubject(const string &pSubject);
-    void setGroup(const string &pGroup);
-    void setTitle(const string pTitles[]);
 };
 
 #endif

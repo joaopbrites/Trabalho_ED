@@ -1,9 +1,9 @@
-
 #include "cabecalhoDado.hpp"
-#include <config.hpp>
-#include <type_dado.hpp>
+#include "config.hpp"
+#include "type_dado.hpp"
 #include <cstring>
 #include <sstream>
+#include "Logger.hpp"
 
 using namespace std;
 
@@ -11,76 +11,81 @@ bool Registro::copiarString(char *destino, const string &origem)
 {
     if (origem.size() >= REGRAS::TAMANHO_CAMPO_REG)
     {
-        return false; // String muito grande para o campo
+        log->warning("Um campo do registro de chave: " + to_string(this->chave_primaria) + " foi truncado");
     }
     strncpy(destino, origem.c_str(), REGRAS::TAMANHO_CAMPO_REG);
     destino[REGRAS::TAMANHO_CAMPO_REG - 1] = '\0'; // Garante terminação nula
     return true;
 }
-Registro::Registro() : series_reference{},
+Registro::Registro() : series_reference(),
                        chave_primaria(INVALID_VALUES::CHAVE_REG),
                        data_value(INVALID_VALUES::DATA_VALUE),
-                       status{},
-                       units{},
+                       status(),
+                       units(),
                        magnitude(INVALID_VALUES::MAGNITUDE),
-                       subject{},
-                       group{},
-                       series_title{}
+                       subject(),
+                       group(),
+                       series_title(),
+                       log(nullptr)
 {
     cabecalhoRegistro.flags = FLAGS::VAZIO;
 }
-Registro::Registro(float pChave) : series_reference{},
-                       chave_primaria(pChave),
-                       data_value(INVALID_VALUES::DATA_VALUE),
-                       status{},
-                       units{},
-                       magnitude(INVALID_VALUES::MAGNITUDE),
-                       subject{},
-                       group{},
-                       series_title{}
+Registro::Registro(float pChave, Logger* pLog) : series_reference(),
+                                                 chave_primaria(pChave),
+                                                 data_value(INVALID_VALUES::DATA_VALUE),
+                                                 status(),
+                                                 units(),
+                                                 magnitude(INVALID_VALUES::MAGNITUDE),
+                                                 subject(),
+                                                 group(),
+                                                 series_title(),
+                                                 log(pLog)
+
 {
     cabecalhoRegistro.flags = FLAGS::VAZIO;
 }
 void Registro::desserializar(const char *buffer)
 {
-    memcpy(&this->cabecalhoRegistro, buffer, sizeof(cabecalhoParaRegistro));
-    buffer += sizeof(cabecalhoParaRegistro);
+    size_t offset = 0;
+    memcpy(&cabecalhoRegistro, buffer + offset, sizeof(cabecalhoParaRegistro));
+    offset += sizeof(cabecalhoParaRegistro);
 
-    memcpy(this->series_reference, buffer, REGRAS::TAMANHO_CAMPO_REG);
-    buffer += REGRAS::TAMANHO_CAMPO_REG;
+    memcpy(series_reference, buffer + offset, REGRAS::TAMANHO_CAMPO_REG);
+    offset += REGRAS::TAMANHO_CAMPO_REG;
 
-    memcpy(&this->chave_primaria, buffer, sizeof(float));
-    buffer += sizeof(float);
+    memcpy(&chave_primaria, buffer + offset, sizeof(float));
+    offset += sizeof(float);
 
-    memcpy(&this->data_value, buffer, sizeof(float));
-    buffer += sizeof(float);
+    memcpy(&data_value, buffer + offset, sizeof(float));
+    offset += sizeof(float);
 
-    memcpy(this->status, buffer, REGRAS::TAMANHO_CAMPO_REG);
-    buffer += REGRAS::TAMANHO_CAMPO_REG;
+    memcpy(status, buffer + offset, REGRAS::TAMANHO_CAMPO_REG);
+    offset += REGRAS::TAMANHO_CAMPO_REG;
 
-    memcpy(this->units, buffer, REGRAS::TAMANHO_CAMPO_REG);
-    buffer += REGRAS::TAMANHO_CAMPO_REG;
+    memcpy(units, buffer + offset, REGRAS::TAMANHO_CAMPO_REG);
+    offset += REGRAS::TAMANHO_CAMPO_REG;
 
-    memcpy(&this->magnitude, buffer, sizeof(int));
-    buffer += sizeof(int);
+    memcpy(&magnitude, buffer + offset, sizeof(int));
+    offset += sizeof(int);
 
-    memcpy(this->subject, buffer, REGRAS::TAMANHO_CAMPO_REG);
-    buffer += REGRAS::TAMANHO_CAMPO_REG;
+    memcpy(subject, buffer + offset, REGRAS::TAMANHO_CAMPO_REG);
+    offset += REGRAS::TAMANHO_CAMPO_REG;
 
-    memcpy(this->group, buffer, REGRAS::TAMANHO_CAMPO_REG);
-    buffer += REGRAS::TAMANHO_CAMPO_REG;
+    memcpy(group, buffer + offset, REGRAS::TAMANHO_CAMPO_REG);
+    offset += REGRAS::TAMANHO_CAMPO_REG;
 
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 4; ++i)
     {
-        memcpy(this->series_title[i], buffer, REGRAS::TAMANHO_CAMPO_REG);
-        buffer += REGRAS::TAMANHO_CAMPO_REG;
+        memcpy(series_title[i], buffer + offset, REGRAS::TAMANHO_CAMPO_REG);
+        offset += REGRAS::TAMANHO_CAMPO_REG;
     }
 }
+
 float Registro::getChavePrimaria() const
 {
     return this->chave_primaria;
 }
-string Registro::gerarStringImpressão() const
+string Registro::gerarStringImpressao() const
 {
     if (this->cabecalhoRegistro.flags != FLAGS::ATIVO)
     {
@@ -96,12 +101,14 @@ string Registro::gerarStringImpressão() const
     ss << "[" << this->magnitude << "] ";
     ss << "[" << this->subject << "] ";
     ss << "[" << this->group << "] ";
-    
+
     // Tratamento especial para o array de títulos
     ss << "Títulos da Série:\n";
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 4; ++i)
+    {
         // Verifica se o título não está vazio antes de imprimir
-        if (this->series_title[i][0] != '\0') {
+        if (this->series_title[i][0] != '\0')
+        {
             ss << " [" << i + 1 << ": " << this->series_title[i] << "]\n";
         }
     }
@@ -113,7 +120,33 @@ uint8_t Registro::getStatus() const
 {
     return this->cabecalhoRegistro.flags;
 }
-
+void Registro::serializar(char *destino) const
+{
+    size_t offset = 0;
+    memcpy(destino + offset, &cabecalhoRegistro, sizeof(cabecalhoParaRegistro));
+    offset += sizeof(cabecalhoParaRegistro);
+    memcpy(destino + offset, series_reference, REGRAS::TAMANHO_CAMPO_REG);
+    offset += REGRAS::TAMANHO_CAMPO_REG;
+    memcpy(destino + offset, &chave_primaria, sizeof(float));
+    offset += sizeof(float);
+    memcpy(destino + offset, &data_value, sizeof(float));
+    offset += sizeof(float);
+    memcpy(destino + offset, status, REGRAS::TAMANHO_CAMPO_REG);
+    offset += REGRAS::TAMANHO_CAMPO_REG;
+    memcpy(destino + offset, units, REGRAS::TAMANHO_CAMPO_REG);
+    offset += REGRAS::TAMANHO_CAMPO_REG;
+    memcpy(destino + offset, &magnitude, sizeof(int));
+    offset += sizeof(int);
+    memcpy(destino + offset, subject, REGRAS::TAMANHO_CAMPO_REG);
+    offset += REGRAS::TAMANHO_CAMPO_REG;
+    memcpy(destino + offset, group, REGRAS::TAMANHO_CAMPO_REG);
+    offset += REGRAS::TAMANHO_CAMPO_REG;
+    for (int i = 0; i < 4; i++)
+    {
+        memcpy(destino + offset, series_title[i], REGRAS::TAMANHO_CAMPO_REG);
+        offset += REGRAS::TAMANHO_CAMPO_REG;
+    }
+}
 
 void Registro::setReference(const string &pReference)
 {
@@ -149,10 +182,11 @@ void Registro::setGroup(const string &pGroup)
     copiarString(group, pGroup);
 }
 
-void Registro::setTitle(const string pTitles[])
+void Registro::setTitle(string pTitles[])
 {
     for (int i = 0; i < 4; i++)
     {
         copiarString(series_title[i], pTitles[i]);
     }
 }
+

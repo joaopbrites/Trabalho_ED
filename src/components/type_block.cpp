@@ -1,8 +1,10 @@
-#include <cabecalhoBloco.hpp>
-#include <type_dado.hpp>
-#include <config.hpp>
-#include <type_block.hpp>
+#include "cabecalhoBloco.hpp"
+#include "type_dado.hpp"
+#include "config.hpp"
+#include "type_block.hpp"
+#include "MergeSort.hpp"
 #include <cstring>
+#include "Logger.hpp"
 
 void BlocoRegistros::atualizarMetadadosAdicao(float chaveInserida)
 {
@@ -43,11 +45,12 @@ void BlocoRegistros::atualizarMetadadosMinMax()
         iterador++;
     }
 }
+
 bool BlocoRegistros::estaCheio()
 {
     return this->cabecalho.qtd_registros_validos >= REGRAS::TAMANHO_BUFFER;
 }
-BlocoRegistros::BlocoRegistros()
+BlocoRegistros::BlocoRegistros() : log(nullptr)
 {
     this->cabecalho.id_bloco = INVALID_VALUES::ID_BLOCK;
     this->cabecalho.qtd_registros_validos = 0;
@@ -59,7 +62,20 @@ BlocoRegistros::BlocoRegistros()
         this->arrayDados[i].setStatus(FLAGS::VAZIO);
     }
 }
-BlocoRegistros::BlocoRegistros(const char buffer[], size_t tamanhoBuffer)
+
+BlocoRegistros::BlocoRegistros(Logger *pLog) : log(pLog)
+{
+    this->cabecalho.id_bloco = INVALID_VALUES::ID_BLOCK;
+    this->cabecalho.qtd_registros_validos = 0;
+    this->cabecalho.chave_min_no_bloco = INVALID_VALUES::CHAVE_MIN_NO_BLOCO;
+    this->cabecalho.chave_max_no_bloco = INVALID_VALUES::CHAVE_MAX_NO_BLOCO;
+
+    for (int i = 0; i < REGRAS::TAMANHO_BUFFER; i++)
+    {
+        this->arrayDados[i].setStatus(FLAGS::VAZIO);
+    }
+}
+BlocoRegistros::BlocoRegistros(const char buffer[], size_t tamanhoBuffer, Logger *pLog) : log(pLog)
 {
     this->cabecalho.id_bloco = INVALID_VALUES::ID_BLOCK;
     this->cabecalho.qtd_registros_validos = 0;
@@ -68,6 +84,7 @@ BlocoRegistros::BlocoRegistros(const char buffer[], size_t tamanhoBuffer)
 
     if (buffer == nullptr || tamanhoBuffer < sizeof(cabecalhoParaBloco))
     {
+        log->warning("Tamanho Buffer no constrtor desserializador menor que o cabeçalho");
         for (int i = 0; i < REGRAS::TAMANHO_BUFFER; i++)
         {
             this->arrayDados[i].setStatus(FLAGS::VAZIO);
@@ -76,7 +93,6 @@ BlocoRegistros::BlocoRegistros(const char buffer[], size_t tamanhoBuffer)
     }
 
     memcpy(&this->cabecalho, buffer, sizeof(cabecalhoParaBloco));
-
 
     const char *dadosBuffer = buffer + sizeof(cabecalhoParaBloco);
 
@@ -189,4 +205,61 @@ bool BlocoRegistros::trocarRegistros(int pos1, int pos2)
 void BlocoRegistros::setIdBloco(uint32_t novoId)
 {
     this->cabecalho.id_bloco = novoId;
+}
+
+cabecalhoParaBloco BlocoRegistros::getCabecalho()
+{
+    return cabecalho;
+}
+void BlocoRegistros::ordenarDecrescente()
+{
+    int qtd = this->cabecalho.qtd_registros_validos;
+    if (qtd > 1)
+    {
+        MergeSort::ordenar(this->arrayDados, qtd);
+    }
+    this->atualizarMetadadosMinMax();
+}
+
+/*bool BlocoRegistros::removerRegistroPorChave(float chave) {
+    for (int i = 0; i < REGRAS::TAMANHO_BUFFER; ++i) {
+        if (arrayDados[i].getChavePrimaria() == chave && arrayDados[i].getStatus() == FLAGS::ATIVO) {
+            arrayDados[i].setStatus(FLAGS::REMOVIDO); // ou VAZIO, conforme sua lógica
+            this->cabecalho.qtd_registros_validos--;
+            this->atualizarMetadadosMinMax();
+            return true;
+        }
+    }
+    return false;
+}*/
+
+bool BlocoRegistros::pullMaiorElemento(Registro &registroDeSaida)
+{
+    float chaveMax = this->cabecalho.chave_max_no_bloco;
+    for (int i = 0; i < REGRAS::TAMANHO_BUFFER; ++i)
+    {
+        if (arrayDados[i].getStatus() == FLAGS::ATIVO && arrayDados[i].getChavePrimaria() == chaveMax)
+        {
+            registroDeSaida = arrayDados[i];
+            arrayDados[i].setStatus(FLAGS::REMOVIDO); // ou VAZIO, conforme sua lógica
+            this->cabecalho.qtd_registros_validos--;
+            this->atualizarMetadadosMinMax();
+            return true;
+        }
+    }
+    return false; // Nenhum registro válido encontrado
+}
+
+bool BlocoRegistros::getMaiorRegistro(Registro &registroDeSaida) const
+{
+    float chaveMin = this->cabecalho.chave_min_no_bloco;
+    for (int i = 0; i < REGRAS::TAMANHO_BUFFER; ++i)
+    {
+        if (arrayDados[i].getStatus() == FLAGS::ATIVO && arrayDados[i].getChavePrimaria() == chaveMin)
+        {
+            registroDeSaida = arrayDados[i]; 
+            return true;
+        }
+    }
+    return false;
 }

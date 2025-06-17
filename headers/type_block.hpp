@@ -3,22 +3,26 @@
 #ifndef TYPE_BLOCK
 #define TYPE_BLOCK
 
-#include <cabecalhoBloco.hpp>
-#include <type_dado.hpp>
-#include <config.hpp>
+#include "cabecalhoBloco.hpp"
+#include "type_dado.hpp"
+#include "config.hpp"
+#include "Logger.hpp"
 
 class BlocoRegistros
 {
 private:
     cabecalhoParaBloco cabecalho;
     Registro arrayDados[REGRAS::TAMANHO_BUFFER];
+
     void atualizarMetadadosAdicao(float chaveInserida);//operacoes ao adicionar um arquivo
     void atualizarMetadadosMinMax(); // atualiza min/max 
-    bool estaCheio();
+    Logger* log;
+
 
 public:
     BlocoRegistros();
-    BlocoRegistros(const char* buffer, size_t tamanhoBuffer);
+    BlocoRegistros(Logger *pLog);
+    BlocoRegistros(const char* buffer, size_t tamanhoBuffer,Logger *log);
     bool push_back(const Registro &novo);
     bool push_position(const Registro &novo, uint32_t pos);
     bool atualizarRegistro(const Registro &registroAtualizado, int pos);
@@ -26,6 +30,15 @@ public:
     int getContagemRegistros() const;
     bool trocarRegistros(int pos1, int pos2);
     void setIdBloco(uint32_t novoId);
-
+    cabecalhoParaBloco getCabecalho();
+    bool estaCheio();
+    // Ordena os registros válidos do bloco em ordem decrescente pela chave primária
+    void ordenarDecrescente();
+    //bool removerRegistroPorChave(float chave);
+    // Retorna o maior registro válido (ATIVO) e o remove do bloco (marca como REMOVIDO)
+    bool pullMaiorElemento(Registro &registroDeSaida);
+    // Retorna o maior registro válido do bloco (com base no cabeçalho)
+    bool getMaiorRegistro(Registro &registroDeSaida) const;
+    
 };
 #endif

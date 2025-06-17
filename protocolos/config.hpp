@@ -18,7 +18,9 @@ namespace REGRAS
     //eliminando a necessidade de mexer em todos os bloco seguintes
     constexpr float OCUPACAO_POR_BLOCO = 0.80;
 
-    constexpr char NOME_ARQUIVO[] = "lms-jun22qtr-csv.csv\0";
+    constexpr char NOME_ARQUIVO_ENTRADA[] = "lms-jun22qtr-csv.csv\0";
+    constexpr char NOME_ARQUIVO_BIN_SAIDA[] = "db.dat";
+    
 
 
     constexpr int TAMANHO_CAMPO_REG = 100;
@@ -29,7 +31,7 @@ namespace REGRAS
 namespace FLAGS
 {
     constexpr uint8_t ATIVO = 0x01;
-    constexpr uint8_t EXCLUIDO_LOGICAMENTE = 0x02;
+    constexpr uint8_t REMOVIDO = 0x02;
     constexpr uint8_t VAZIO = 0X03;
 
 }
