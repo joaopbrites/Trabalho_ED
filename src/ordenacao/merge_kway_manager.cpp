@@ -1,94 +1,74 @@
 #include "merge_kway_manager.hpp"
-#include "config.hpp"
-#include "blocoComCursor.hpp"
+#include "LeitorBin.hpp"
+#include "gravar_blocos_bin.hpp"
+#include "Buffer.hpp"
+#include "type_block.hpp"
+#include <string>
 
-MergeKWayManager::MergeKWayManager(
-    LeitorBin& l,
-    GravadorDeBlocos& g,
-    Logger *pLog,
-    int quantidadeDeSlotsBuffer)
-    : leitor(&l), gravador(&g), log(pLog), quantidadeDeSlots(quantidadeDeSlotsBuffer)
-{
-}
+MergeKWayManager::MergeKWayManager(Logger *pLog, int quantidadeDeSlotsBuffer)
+    : log(pLog), quantidadeDeSlots(quantidadeDeSlotsBuffer) {}
 
-
-void MergeKWayManager::executarMerge() {
-    int totalBlocosNoArquivo = leitor->getCabecalho().qtd_total_blocos_no_arquivo;
-    int proximoIndiceDeBloco = 0;
-
-    BlocoRegistros blocoSaida(log);
-
-    static const int MAX_BLOCOS = REGRAS::QUANTIDADES_DE_SLOTS_BUFFER;
-    BlocoComCursor blocosAtivos[MAX_BLOCOS];
-    int quantidadeAtivos = 0;
-
-    while (quantidadeAtivos < quantidadeDeSlots && proximoIndiceDeBloco < totalBlocosNoArquivo) {
-        leitor->posicionarParaBloco(proximoIndiceDeBloco);
-        BlocoRegistros blocoLido(log);
-        if (leitor->lerProximoBloco(blocoLido)) {
-            BlocoComCursor tempCursor(blocoLido, proximoIndiceDeBloco);
-            blocosAtivos[quantidadeAtivos] = tempCursor;
-            quantidadeAtivos++;
-        } 
-
-        proximoIndiceDeBloco++;
+void MergeKWayManager::mergeGrupoDeRuns(const string* arquivos, int quantidade, const string& nomeSaida) {
+    LeitorBin* leitores[quantidadeDeSlots];
+    bool leitoresAtivos[quantidadeDeSlots];
+    BufferClass buffer(this->log);
+    
+    // Inicialização dos leitores e primeiro carregamento
+    for (int i = 0; i < quantidade && i < this->quantidadeDeSlots; ++i) {
+        leitores[i] = new LeitorBin(arquivos[i].c_str(), this->log);
+        leitoresAtivos[i] = true;
+        BlocoRegistros bloco(this->log);
+        if (leitores[i]->lerProximoBloco(bloco)) {
+            buffer.setSlot(i, bloco);
+        }
     }
 
-    while (quantidadeAtivos > 0) {
-        int indiceDoMaior = -1;
-        float maiorChave = -1.0f;
-        for (int i = 0; i < quantidadeAtivos; ++i) {
-            if (!blocosAtivos[i].ativo || blocosAtivos[i].indiceAtual >= blocosAtivos[i].indiceFinal) {
-                continue;
+    GravadorDeBlocos gravador(nomeSaida, this->log);
+    BlocoRegistros blocoSaida(this->log);
+    bool dadosRestantes = true;
+
+    while (dadosRestantes) {
+        Registro maiorReg;
+        if (buffer.pullMaior(maiorReg)) {
+            blocoSaida.push_back(maiorReg);
+            
+            if (blocoSaida.getContagemRegistros() >= REGRAS::TAMANHO_BUFFER_MARGEM) {
+                gravador.escreverBloco(blocoSaida);
+                blocoSaida = BlocoRegistros(this->log);
             }
-            Registro reg;
-            if (blocosAtivos[i].bloco.getRegistroPorIndice(blocosAtivos[i].indiceAtual, reg)) {
-                float chave = reg.getChavePrimaria();
-                if (indiceDoMaior == -1 || chave > maiorChave) {
-                    indiceDoMaior = i;
-                    maiorChave = chave;
-                }
-            } 
+        } else {
+            dadosRestantes = false;
         }
-        if (indiceDoMaior == -1) {
-            break;
-        }
-        Registro regSelecionado;
-        blocosAtivos[indiceDoMaior].bloco.getRegistroPorIndice(
-            blocosAtivos[indiceDoMaior].indiceAtual, regSelecionado);
-        blocosAtivos[indiceDoMaior].indiceAtual++;
-        blocoSaida.push_back(regSelecionado);
-        if (blocoSaida.getContagemRegistros() >= REGRAS::TAMANHO_BUFFER) {
-            gravador->escreverBloco(blocoSaida);
-            blocoSaida = BlocoRegistros(log);
-        }
-        if (blocosAtivos[indiceDoMaior].indiceAtual >= blocosAtivos[indiceDoMaior].indiceFinal) {
-            if (proximoIndiceDeBloco < totalBlocosNoArquivo) {
-                leitor->posicionarParaBloco(proximoIndiceDeBloco);
-                BlocoRegistros novoBloco(log);
-                if (leitor->lerProximoBloco(novoBloco)) {
-                    blocosAtivos[indiceDoMaior] = BlocoComCursor(novoBloco, proximoIndiceDeBloco);
-                    proximoIndiceDeBloco++;
+
+        // Recarrega os slots vazios
+        for (int i = 0; i < this->quantidadeDeSlots; ++i) {
+            if (leitoresAtivos[i] && buffer.slotVazio(i) && !leitores[i]->chegouAoFim()) {
+                BlocoRegistros novoBloco(this->log);
+                if (leitores[i]->lerProximoBloco(novoBloco)) {
+                    buffer.setSlot(i, novoBloco);
                 } else {
-                    blocosAtivos[indiceDoMaior].ativo = false;
+                    leitoresAtivos[i] = false;
                 }
-            } else {
-                blocosAtivos[indiceDoMaior].ativo = false;
             }
         }
-        for (int i = 0; i < quantidadeAtivos;) {
-            if (!blocosAtivos[i].ativo) {
-                for (int j = i; j < quantidadeAtivos - 1; ++j) {
-                    blocosAtivos[j] = blocosAtivos[j + 1];
+
+        if (buffer.bufferVazio()) {
+            bool todosTerminaram = true;
+            for (int i = 0; i < this->quantidadeDeSlots && todosTerminaram; ++i) {
+                if (leitoresAtivos[i] && !leitores[i]->chegouAoFim()) {
+                    todosTerminaram = false;
                 }
-                quantidadeAtivos--;
-            } else {
-                ++i;
             }
+            if (todosTerminaram) dadosRestantes = false;
         }
     }
+
     if (blocoSaida.getContagemRegistros() > 0) {
-        gravador->escreverBloco(blocoSaida);
+        gravador.escreverBloco(blocoSaida);
     }
-    gravador->finalizar();
+
+    gravador.finalizar();
+    for (int i = 0; i < this->quantidadeDeSlots; ++i) {
+        delete leitores[i];
+    }
 }

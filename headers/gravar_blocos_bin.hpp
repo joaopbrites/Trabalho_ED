@@ -18,7 +18,7 @@ private:
     Logger* log;
 
 public:
-    GravadorDeBlocos(const char* caminhoSaida, Logger *pLog);
+    GravadorDeBlocos(const string caminhoSaida, Logger *pLog);
     ~GravadorDeBlocos();
     bool escreverBloco(BlocoRegistros& bloco);
     void finalizar();

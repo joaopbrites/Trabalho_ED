@@ -18,6 +18,8 @@ namespace REGRAS
     //eliminando a necessidade de mexer em todos os bloco seguintes
     constexpr float OCUPACAO_POR_BLOCO = 0.80;
 
+    constexpr int TAMANHO_BUFFER_MARGEM = TAMANHO_BUFFER * OCUPACAO_POR_BLOCO;
+
     constexpr char NOME_ARQUIVO_ENTRADA[] = "lms-jun22qtr-csv.csv\0";
     constexpr char NOME_ARQUIVO_BIN_SAIDA[] = "db.dat";
     

@@ -35,6 +35,11 @@ public:
     bool getSlot(int indice, BlocoRegistros &Saida);
 
     bool pullMaior(Registro &Saida);
+    // Mescla os slots do buffer mantendo a ordem decrescente
+    // Retorna o número de blocos completos mesclados
+    void mesclarMaioresPorBloco();
+    // Retorna a posição de um registro vazio ou excluído em um slot
+    int posicaoVaziaOuExcluidaNoSlot(int slot) const;
 };
 
 #endif

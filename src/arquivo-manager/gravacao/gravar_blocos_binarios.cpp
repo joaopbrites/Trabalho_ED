@@ -1,7 +1,7 @@
 #include "gravar_blocos_bin.hpp"
 using namespace std;
 
-GravadorDeBlocos::GravadorDeBlocos(const char* caminhoSaida, Logger* pLog)
+GravadorDeBlocos::GravadorDeBlocos(const string caminhoSaida, Logger* pLog)
     : log(pLog)
 {
     arquivoSaida.open(caminhoSaida, ios::binary | ios::out | ios::trunc);

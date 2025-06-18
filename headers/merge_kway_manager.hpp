@@ -3,22 +3,22 @@
 #ifndef MERGE_KWAY_MANAGER
 #define MERGE_KWAY_MANAGER
 
-#include "LeitorBin.hpp"
-#include "gravar_blocos_bin.hpp"
 #include "Logger.hpp"
-#include "type_block.hpp"
-#include "blocoComCursor.hpp"
+#include <string>
 
 class MergeKWayManager {
 private:
-    LeitorBin* leitor;
-    GravadorDeBlocos* gravador;
     Logger* log;
     int quantidadeDeSlots;
+    void mergeGrupoDeRuns(const string* arquivos, int quantidade, const string& nomeSaida);
 
 public:
-    MergeKWayManager(LeitorBin& l, GravadorDeBlocos& g, Logger *pLog, int quantidadeDeSlotsBuffer);
-    void executarMerge();
+    MergeKWayManager(Logger *pLog, int quantidadeDeSlotsBuffer);
+    // Executa o merge multiway em múltiplas etapas
+    // nomeBase: base dos nomes das runs (ex: "run")
+    // quantidadeRuns: número de runs geradas
+    // Retorna o nome do arquivo final
+    string executarMergeMultiEtapas(const string& nomeBase, int quantidadeRuns);
 };
 
 #endif
