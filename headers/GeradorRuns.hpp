@@ -21,7 +21,7 @@ public:
     ~GerarRuns();
 
     // Gera uma run e grava no arquivo especificado
-    bool gerarRun(const char* nomeArquivo);
+    bool gerarRun();
     int quantArquivosGerado();
 };
 

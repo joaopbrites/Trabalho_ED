@@ -48,47 +48,23 @@ void BlocoRegistros::atualizarMetadadosMinMax()
 
 bool BlocoRegistros::estaCheio()
 {
-    return this->cabecalho.qtd_registros_validos >= REGRAS::TAMANHO_BUFFER;
+    return this->cabecalho.qtd_registros_validos >= REGRAS::QUANTIDADE_REGISTROS;
 }
 BlocoRegistros::BlocoRegistros() : log(nullptr)
 {
-    this->cabecalho.id_bloco = INVALID_VALUES::ID_BLOCK;
-    this->cabecalho.qtd_registros_validos = 0;
-    this->cabecalho.chave_min_no_bloco = INVALID_VALUES::CHAVE_MIN_NO_BLOCO;
-    this->cabecalho.chave_max_no_bloco = INVALID_VALUES::CHAVE_MAX_NO_BLOCO;
-
-    for (int i = 0; i < REGRAS::TAMANHO_BUFFER; i++)
-    {
-        this->arrayDados[i].setStatus(FLAGS::VAZIO);
-    }
+    this->esvaziar();
 }
 
 BlocoRegistros::BlocoRegistros(Logger *pLog) : log(pLog)
 {
-    this->cabecalho.id_bloco = INVALID_VALUES::ID_BLOCK;
-    this->cabecalho.qtd_registros_validos = 0;
-    this->cabecalho.chave_min_no_bloco = INVALID_VALUES::CHAVE_MIN_NO_BLOCO;
-    this->cabecalho.chave_max_no_bloco = INVALID_VALUES::CHAVE_MAX_NO_BLOCO;
-
-    for (int i = 0; i < REGRAS::TAMANHO_BUFFER; i++)
-    {
-        this->arrayDados[i].setStatus(FLAGS::VAZIO);
-    }
+    this->esvaziar();
 }
 BlocoRegistros::BlocoRegistros(const char buffer[], size_t tamanhoBuffer, Logger *pLog) : log(pLog)
 {
-    this->cabecalho.id_bloco = INVALID_VALUES::ID_BLOCK;
-    this->cabecalho.qtd_registros_validos = 0;
-    this->cabecalho.chave_min_no_bloco = INVALID_VALUES::CHAVE_MIN_NO_BLOCO;
-    this->cabecalho.chave_max_no_bloco = INVALID_VALUES::CHAVE_MAX_NO_BLOCO;
-
     if (buffer == nullptr || tamanhoBuffer < sizeof(cabecalhoParaBloco))
     {
         log->warning("Tamanho Buffer no constrtor desserializador menor que o cabeçalho");
-        for (int i = 0; i < REGRAS::TAMANHO_BUFFER; i++)
-        {
-            this->arrayDados[i].setStatus(FLAGS::VAZIO);
-        }
+        this->esvaziar();
         return;
     }
 
@@ -262,4 +238,16 @@ bool BlocoRegistros::getMaiorRegistro(Registro &registroDeSaida) const
         }
     }
     return false;
+}
+void BlocoRegistros::esvaziar()
+{
+    this->cabecalho.id_bloco = INVALID_VALUES::ID_BLOCK;
+    this->cabecalho.qtd_registros_validos = 0;
+    this->cabecalho.chave_min_no_bloco = INVALID_VALUES::CHAVE_MIN_NO_BLOCO;
+    this->cabecalho.chave_max_no_bloco = INVALID_VALUES::CHAVE_MAX_NO_BLOCO;
+
+    for (int i = 0; i < REGRAS::TAMANHO_BUFFER; i++)
+    {
+        this->arrayDados[i].setStatus(FLAGS::VAZIO);
+    }
 }

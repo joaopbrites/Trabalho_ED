@@ -17,7 +17,7 @@ private:
     Logger* log;
 
 public:
-    LeitorBin(const char* caminho, Logger *pLog);
+    LeitorBin(const string caminho, Logger *pLog);
     ~LeitorBin();
     bool lerProximoBloco(BlocoRegistros& bloco);
     bool posicionarParaBloco(int indice);

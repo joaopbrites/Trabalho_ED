@@ -1,6 +1,6 @@
 #include "LeitorBin.hpp" 
-#include "merge_kway_manager.hpp"
-#include "gravar_blocos_bin.hpp"
+#include "MergeArquivos.hpp"
+#include "GravarBinBlocos.hpp"
 #include "Logger.hpp"
 #include "config.hpp"
 #include <cstdio>
@@ -95,13 +95,13 @@ int main() {
     GravadorDeBlocos gravador(caminhoSaida, &logger);
 
     // Define número de slots do buffer (pode vir de config.hpp)
-    int quantidadeDeSlotsBuffer = REGRAS::QUANTIDADES_DE_SLOTS_BUFFER;
+    //int quantidadeDeSlotsBuffer = REGRAS::QUANTIDADES_DE_SLOTS_BUFFER;
 
     // Inicializa gerenciador de merge k-way
-    MergeKWayManager gerenciador(leitor, gravador, &logger, quantidadeDeSlotsBuffer);
+    //MergeArquivos gerenciador();
 
     // Executa o merge
-    gerenciador.executarMerge();
+    //gerenciador.merge();
 
     logger.info("Merge K-way finalizado com sucesso.");
 

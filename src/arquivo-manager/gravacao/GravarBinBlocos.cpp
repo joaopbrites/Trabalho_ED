@@ -1,4 +1,6 @@
-#include "gravar_blocos_bin.hpp"
+#include "GravarBinBlocos.hpp"
+
+
 using namespace std;
 
 GravadorDeBlocos::GravadorDeBlocos(const string caminhoSaida, Logger* pLog)

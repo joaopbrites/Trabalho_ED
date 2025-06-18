@@ -3,6 +3,7 @@
 #ifndef REGRAS_DE_NEGOCIO
 #define REGRAS_DE_NEGOCIO
 
+#include <cstdint>
 
 
 using namespace std;
@@ -23,7 +24,7 @@ namespace REGRAS
     constexpr char NOME_ARQUIVO_ENTRADA[] = "lms-jun22qtr-csv.csv\0";
     constexpr char NOME_ARQUIVO_BIN_SAIDA[] = "db.dat";
     
-
+    constexpr char CAMINHO_BASE_RUN[] = "../../data/runs/run_etapa_";
 
     constexpr int TAMANHO_CAMPO_REG = 100;
 
@@ -35,7 +36,7 @@ namespace FLAGS
     constexpr uint8_t ATIVO = 0x01;
     constexpr uint8_t REMOVIDO = 0x02;
     constexpr uint8_t VAZIO = 0X03;
-
+    constexpr uint8_t  INVALIDO = 0X04;
 }
 
 namespace INVALID_VALUES

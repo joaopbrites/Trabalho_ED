@@ -23,6 +23,7 @@ public:
     BlocoRegistros();
     BlocoRegistros(Logger *pLog);
     BlocoRegistros(const char* buffer, size_t tamanhoBuffer,Logger *log);
+    void esvaziar();
     bool push_back(const Registro &novo);
     bool push_position(const Registro &novo, uint32_t pos);
     bool atualizarRegistro(const Registro &registroAtualizado, int pos);

@@ -7,17 +7,24 @@ project(Teste VERSION 1.0) #nome provisório
 
 add_executable(
     ${PROJECT_NAME} 
+    src/arquivo-manager/gravacao/GravarBinBlocos.cpp
+    src/arquivo-manager/leitura/LeitorBin.cpp 
+    src/arquivo-manager/leitura/LeitorCSV.cpp
+    src/arquivo-manager/leitura/LeitorBinArray.cpp
+
     src/components/Buffer.cpp
     src/components/type_block.cpp
     src/components/type_dado.cpp
     src/components/Logger.cpp
+    src/components/Semafaro.cpp 
 
-    src/arquivo-manager/gravacao/gravar_blocos_binarios.cpp
-    src/arquivo-manager/leitura/LeitorBin.cpp 
-    src/arquivo-manager/leitura/LeitorCSV.cpp
-
-    src/ordenacao/merge_kway_manager.cpp
+    src/ordenacao/MergeArquivos.cpp
     src/ordenacao/MergeSort.cpp
+
+    src/runs/GeradorRuns.cpp
+    src/runs/GerarNomeRun.cpp 
+    
+
 
     src/main.cpp
 )

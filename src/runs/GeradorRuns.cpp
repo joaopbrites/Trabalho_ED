@@ -1,9 +1,9 @@
-#include "geradorRuns.hpp"
-#include <fstream>
+#include "GeradorRuns.hpp"
 #include "LeitorCSV.hpp"
 #include "Logger.hpp"
 #include "Buffer.hpp"
-#include "gravar_blocos_bin.hpp"
+#include "GravarBinBlocos.hpp"
+#include "GeradorNomeRun.hpp"
 
 using namespace std;
 
@@ -12,8 +12,9 @@ GerarRuns::GerarRuns(LeitorCSV *leitorPtr, Logger *logPtr)
 
 GerarRuns::~GerarRuns() {}
 
-bool GerarRuns::gerarRun(const char *nomeArquivoBase)
+bool GerarRuns::gerarRun()
 {
+    GerarNomeRun nome(0, 0);
     if (leitor->chegouAoFim())
     {
         if (log)
@@ -22,8 +23,9 @@ bool GerarRuns::gerarRun(const char *nomeArquivoBase)
     }
     while (!leitor->chegouAoFim())
     {
+
         BufferClass buffer(*leitor, log);
-        string nomeArquivo = string(nomeArquivoBase) + "/Run_" + to_string(indice) + ".bin";
+        string nomeArquivo = nome.getNomeRun();;
         GravadorDeBlocos gravador(nomeArquivo, log);
 
         // Escreve todos os blocos do buffer no arquivo

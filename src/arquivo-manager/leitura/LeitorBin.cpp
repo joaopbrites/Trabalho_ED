@@ -3,7 +3,7 @@
 
 using namespace std;
 
-LeitorBin::LeitorBin(const char* caminho, Logger *pLog)
+LeitorBin::LeitorBin(const string caminho, Logger *pLog)
     : log(pLog)
 {
     arquivoEntrada.open(caminho, ios::binary);
