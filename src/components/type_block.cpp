@@ -5,9 +5,25 @@
 #include "MergeSort.hpp"
 #include <cstring>
 #include "Logger.hpp"
-#include <iostream>
 
-void BlocoRegistros::atualizarMetadadosMax()
+void BlocoRegistros::atualizarMetadadosAdicao(float chaveInserida)
+{
+    this->cabecalho.qtd_registros_validos++;
+    if (this->cabecalho.qtd_registros_validos == 0)
+    {
+        this->cabecalho.chave_max_no_bloco = chaveInserida;
+        this->cabecalho.chave_min_no_bloco = chaveInserida;
+    }
+    else if (chaveInserida > this->cabecalho.chave_max_no_bloco)
+    {
+        this->cabecalho.chave_max_no_bloco = chaveInserida;
+    }
+    else if (chaveInserida < this->cabecalho.chave_min_no_bloco)
+    {
+        this->cabecalho.chave_min_no_bloco = chaveInserida;
+    }
+} // atualiza min/max e número de registros validos
+void BlocoRegistros::atualizarMetadadosMinMax()
 {
     int iterador = 0;
     uint32_t sentinela = 0;
@@ -16,9 +32,13 @@ void BlocoRegistros::atualizarMetadadosMax()
         Registro aux = this->arrayDados[iterador];
         if (aux.getStatus() == FLAGS::ATIVO)
         {
-            if (aux.getChavePrimaria() > this->maiorElemento)
+            if (aux.getChavePrimaria() > this->cabecalho.chave_max_no_bloco)
             {
-                this->maiorElemento = aux.getChavePrimaria();
+                this->cabecalho.chave_max_no_bloco = aux.getChavePrimaria();
+            }
+            if (aux.getChavePrimaria() < this->cabecalho.chave_min_no_bloco)
+            {
+                this->cabecalho.chave_min_no_bloco = aux.getChavePrimaria();
             }
             sentinela++;
         }
@@ -61,11 +81,12 @@ BlocoRegistros::BlocoRegistros(const char buffer[], size_t tamanhoBuffer, Logger
     if (this->cabecalho.qtd_registros_validos > 0)
     {
         bool precisaAtualizarMinMax =
-            (this->maiorElemento == INVALID_VALUES::CHAVE_MAX_NO_BLOCO);
+            (this->cabecalho.chave_min_no_bloco == INVALID_VALUES::CHAVE_MIN_NO_BLOCO) ||
+            (this->cabecalho.chave_max_no_bloco == INVALID_VALUES::CHAVE_MAX_NO_BLOCO);
 
         if (precisaAtualizarMinMax)
         {
-            this->atualizarMetadadosMax();
+            this->atualizarMetadadosMinMax();
         }
     }
 }
@@ -76,7 +97,7 @@ bool BlocoRegistros::push_back(const Registro &novo)
         return false;
     }
     this->arrayDados[this->cabecalho.qtd_registros_validos] = novo;
-    this->atualizarMetadadosMax();
+    this->atualizarMetadadosAdicao(novo.getChavePrimaria());
     return true;
 }
 bool BlocoRegistros::push_position(const Registro &novo, uint32_t pos)
@@ -103,7 +124,7 @@ bool BlocoRegistros::push_position(const Registro &novo, uint32_t pos)
         }
         this->arrayDados[pos] = novo;
     }
-    this->atualizarMetadadosMax();
+    this->atualizarMetadadosAdicao(novo.getChavePrimaria());
     return true;
 }
 bool BlocoRegistros::atualizarRegistro(const Registro &registroAtualizado, int pos)
@@ -114,8 +135,9 @@ bool BlocoRegistros::atualizarRegistro(const Registro &registroAtualizado, int p
     }
 
     this->arrayDados[pos] = registroAtualizado;
-    this->maiorElemento = registroAtualizado.getChavePrimaria();
-    this->atualizarMetadadosMax();
+    this->cabecalho.chave_min_no_bloco = registroAtualizado.getChavePrimaria();
+    this->cabecalho.chave_max_no_bloco = registroAtualizado.getChavePrimaria();
+    this->atualizarMetadadosMinMax();
     return true;
 }
 bool BlocoRegistros::getRegistroPorIndice(int indice, Registro &registroDeSaida) const
@@ -172,7 +194,7 @@ void BlocoRegistros::ordenarDecrescente()
     {
         MergeSort::ordenar(this->arrayDados, qtd);
     }
-    this->atualizarMetadadosMax();
+    this->atualizarMetadadosMinMax();
 }
 
 /*bool BlocoRegistros::removerRegistroPorChave(float chave) {
@@ -180,7 +202,7 @@ void BlocoRegistros::ordenarDecrescente()
         if (arrayDados[i].getChavePrimaria() == chave && arrayDados[i].getStatus() == FLAGS::ATIVO) {
             arrayDados[i].setStatus(FLAGS::REMOVIDO); // ou VAZIO, conforme sua lógica
             this->cabecalho.qtd_registros_validos--;
-            this->atualizarMetadadosMax();
+            this->atualizarMetadadosMinMax();
             return true;
         }
     }
@@ -189,8 +211,7 @@ void BlocoRegistros::ordenarDecrescente()
 
 bool BlocoRegistros::pullMaiorElemento(Registro &registroDeSaida)
 {
-    cout << this->maiorElemento;
-    float chaveMax = this->maiorElemento;
+    float chaveMax = this->cabecalho.chave_max_no_bloco;
     for (int i = 0; i < REGRAS::TAMANHO_BUFFER; ++i)
     {
         if (arrayDados[i].getStatus() == FLAGS::ATIVO && arrayDados[i].getChavePrimaria() == chaveMax)
@@ -198,7 +219,7 @@ bool BlocoRegistros::pullMaiorElemento(Registro &registroDeSaida)
             registroDeSaida = arrayDados[i];
             arrayDados[i].setStatus(FLAGS::REMOVIDO); // ou VAZIO, conforme sua lógica
             this->cabecalho.qtd_registros_validos--;
-            this->atualizarMetadadosMax();
+            this->atualizarMetadadosMinMax();
             return true;
         }
     }
@@ -207,9 +228,10 @@ bool BlocoRegistros::pullMaiorElemento(Registro &registroDeSaida)
 
 bool BlocoRegistros::getMaiorRegistro(Registro &registroDeSaida) const
 {
+    float chaveMin = this->cabecalho.chave_min_no_bloco;
     for (int i = 0; i < REGRAS::TAMANHO_BUFFER; ++i)
     {
-        if (arrayDados[i].getStatus() == FLAGS::ATIVO && arrayDados[i].getChavePrimaria() == maiorElemento)
+        if (arrayDados[i].getStatus() == FLAGS::ATIVO && arrayDados[i].getChavePrimaria() == chaveMin)
         {
             registroDeSaida = arrayDados[i]; 
             return true;
@@ -221,7 +243,8 @@ void BlocoRegistros::esvaziar()
 {
     this->cabecalho.id_bloco = INVALID_VALUES::ID_BLOCK;
     this->cabecalho.qtd_registros_validos = 0;
-    this->maiorElemento = INVALID_VALUES::CHAVE_MAX_NO_BLOCO;
+    this->cabecalho.chave_min_no_bloco = INVALID_VALUES::CHAVE_MIN_NO_BLOCO;
+    this->cabecalho.chave_max_no_bloco = INVALID_VALUES::CHAVE_MAX_NO_BLOCO;
 
     for (int i = 0; i < REGRAS::TAMANHO_BUFFER; i++)
     {

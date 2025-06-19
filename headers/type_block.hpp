@@ -12,12 +12,11 @@ class BlocoRegistros
 {
 private:
     cabecalhoParaBloco cabecalho;
-    float maiorElemento;
     Registro arrayDados[REGRAS::TAMANHO_BUFFER];
 
-    void atualizarMetadadosMax(); // atualiza maior 
+    void atualizarMetadadosAdicao(float chaveInserida);//operacoes ao adicionar um arquivo
+    void atualizarMetadadosMinMax(); // atualiza min/max 
     Logger* log;
-
 
 
 public:

@@ -37,13 +37,12 @@ public:
     void serializar(char* destino) const;
     void setReference(const string &pReference);
     void setDataValue(float pData);
-    void setStatus(const uint8_t pStatus);
+    void setStatus(const float &pStatus);
     void setUnits(const string &pUnits);
     void setMagnitude(int pMagnitude);
     void setSubject(const string &pSubject);
     void setGroup(const string &pGroup);
     void setTitle(string pTitles[]);
-    void setStatusReference(const string &pStatus);
 
     static constexpr size_t sizeofRegistro()
     {

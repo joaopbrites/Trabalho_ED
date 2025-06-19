@@ -1,6 +1,7 @@
 #include "type_dado.hpp"
 #include "config.hpp"
 #include "Buffer.hpp"
+#include "mock.hpp"
 #include "LeitorCSV.hpp"
 
 
@@ -45,10 +46,8 @@ BufferClass::BufferClass(LeitorCSV &leitor, Logger *pLog) : log(pLog)
             Registro aux;
             if (leitor.lerProximo(aux))
             {
-                if (buffer[i].push_back(aux))
-                {
-                    sentinela = true;
-                }
+                if (!buffer[i].push_back(aux))
+                    break;
             }
             else if (leitor.chegouAoFim())
             {
@@ -58,7 +57,7 @@ BufferClass::BufferClass(LeitorCSV &leitor, Logger *pLog) : log(pLog)
             else
             {
                 log->warning("Erro desconhecido na leitura da linha durante a construção do buffer");
-                sentinela = true;
+                break;
             }
         }
         buffer[i].ordenarDecrescente();

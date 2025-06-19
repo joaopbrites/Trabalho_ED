@@ -7,7 +7,7 @@ using namespace std;
 
 Logger::Logger(const string& logBaseName) {
     string filename = generateLogFileName(logBaseName);
-    logFile.open("../data/logs/"+filename);
+    logFile.open("../../data/logs/"+filename);
     
     if (!logFile.is_open()) {
         /*cerr << "ERRO: Não foi possível criar o arquivo de log: " 
