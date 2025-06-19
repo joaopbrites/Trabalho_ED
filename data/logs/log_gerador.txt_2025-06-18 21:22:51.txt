@@ -1,2 +1,0 @@
-[2025-06-18 21:22:51] [INFO] Log iniciado
-[2025-06-18 21:22:51] [INFO] Arquivo de entrada CSV gerado com sucesso.
