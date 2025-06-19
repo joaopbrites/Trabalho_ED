@@ -22,7 +22,7 @@ add_executable(
     src/ordenacao/MergeSort.cpp
 
     src/runs/GeradorRuns.cpp
-    src/runs/GerarNomeRun.cpp 
+    src/runs/GeradorNomeRun.cpp 
     
 
 

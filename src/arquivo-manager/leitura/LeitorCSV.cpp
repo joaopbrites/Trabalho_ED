@@ -38,6 +38,7 @@ bool LeitorCSV::lerProximo(Registro &registroOut)
 
     if (!getline(arquivo, bufferLinha))
         return false;
+    
 
     istringstream ss(bufferLinha);
     string campo;
@@ -100,9 +101,10 @@ bool LeitorCSV::lerProximo(Registro &registroOut)
     }
 
     registroOut = Registro(chavePrimaria, log);
+    registroOut.setStatus(FLAGS::ATIVO);
     registroOut.setReference(reference);
     registroOut.setDataValue(dataValue);
-    registroOut.setStatus(stof(status));
+    registroOut.setStatusReference(status);
     registroOut.setUnits(units);
     registroOut.setMagnitude(magnitude);
     registroOut.setSubject(subject);

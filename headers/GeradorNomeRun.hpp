@@ -10,11 +10,12 @@
 class GerarNomeRun
 {
 private: 
-    const string nomeBase;
+    string nomeBase;
     const int etapa;
     int nArquivo;
 public:
     GerarNomeRun(int pEtapa, int pNArquivo);
+    GerarNomeRun(string pNomeFinal);
     string getNomeRun();
 };
 

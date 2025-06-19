@@ -157,9 +157,14 @@ void Registro::setDataValue(float pData)
     data_value = pData;
 }
 
-void Registro::setStatus(const float &pStatus)
+void Registro::setStatus(const uint8_t pStatus)
 {
-    cabecalhoRegistro.flags = static_cast<uint8_t>(pStatus);
+    cabecalhoRegistro.flags = pStatus;
+}
+
+void Registro::setStatusReference(const string &pStatus)
+{
+    copiarString(this->status, pStatus);
 }
 
 void Registro::setUnits(const string &pUnits)

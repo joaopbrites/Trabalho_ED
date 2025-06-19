@@ -5,16 +5,16 @@
 #include "GravarBinBlocos.hpp"
 #include "GeradorNomeRun.hpp"
 
+
 using namespace std;
 
-GerarRuns::GerarRuns(LeitorCSV *leitorPtr, Logger *logPtr)
-    : leitor(leitorPtr), log(logPtr), indice(0) {}
+GerarRuns::GerarRuns(LeitorCSV *leitorPtr, Logger *logPtr, GerarNomeRun &pNome)
+    : leitor(leitorPtr), log(logPtr), indice(0), nome(&pNome){}
 
 GerarRuns::~GerarRuns() {}
 
 bool GerarRuns::gerarRun()
 {
-    GerarNomeRun nome(0, 0);
     if (leitor->chegouAoFim())
     {
         if (log)
@@ -23,11 +23,9 @@ bool GerarRuns::gerarRun()
     }
     while (!leitor->chegouAoFim())
     {
-
         BufferClass buffer(*leitor, log);
-        string nomeArquivo = nome.getNomeRun();;
+        string nomeArquivo = nome->getNomeRun();
         GravadorDeBlocos gravador(nomeArquivo, log);
-
         // Escreve todos os blocos do buffer no arquivo
         while (!buffer.bufferVazio())
         {
