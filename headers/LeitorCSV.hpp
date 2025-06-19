@@ -6,6 +6,7 @@
 
 #include "type_dado.hpp"
 #include "Logger.hpp"
+#include "type_block.hpp"
 #include <fstream>
 
 class LeitorCSV {
@@ -21,7 +22,8 @@ public:
     bool lerProximo(Registro& registroOut);
     bool estaAberto() const;
     void fechar();
-    bool chegouAoFim();
+    bool gerarBloco(BlocoRegistros &saida);
+    bool chegouAoFim() const;
 };
 
 #endif

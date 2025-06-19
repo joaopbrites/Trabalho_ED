@@ -23,8 +23,7 @@ private:
 
 public:
     BufferClass(Logger *pLog);
-    BufferClass(LeitorCSV &leitor, Logger *pLog);
-    BufferClass(LeitorBin &leitor, Logger *pLog);
+    BufferClass(LeitorBin *leitor, Logger *pLog);
 
     bool slotVazio(int indice);
     bool bufferVazio();

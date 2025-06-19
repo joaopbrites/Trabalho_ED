@@ -4,7 +4,7 @@
 using namespace std;
 
 GravadorDeBlocos::GravadorDeBlocos(const string caminhoSaida, Logger* pLog)
-    : log(pLog)
+    : log(pLog), nomeAquivo(caminhoSaida)
 {
            
     arquivoSaida.open(caminhoSaida, ios::binary | ios::out | ios::trunc);
@@ -77,7 +77,7 @@ bool GravadorDeBlocos::escreverBloco(BlocoRegistros& bloco) {
     return true;
 }
 
-void GravadorDeBlocos::finalizar() {
+void GravadorDeBlocos::finalizar(){
     if (!arquivoSaida.is_open()) return;
 
     // Reposiciona no início para regravar o cabeçalho
@@ -86,5 +86,10 @@ void GravadorDeBlocos::finalizar() {
     if (!arquivoSaida) {
         log->error("Erro ao reescrever o cabeçalho final do arquivo.");
     }
+    else
+    {
+        log->info("Bloco de nome: " + nomeAquivo + " gravado com "+ to_string(cabecalhoArquivo.qtd_total_registros_no_arquivo)+ " bloco\n");
+    }
+
     arquivoSaida.close();
 }

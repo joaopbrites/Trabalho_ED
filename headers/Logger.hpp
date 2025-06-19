@@ -19,14 +19,19 @@ public:
     void info(const string& message);
 
     // Construtor recebe um nome base para o arquivo (opcional)
-    Logger(const string& logBaseName = "log");
+    Logger();
     ~Logger();
 
 private:
-    ofstream logFile;
+    string infoName;
+    string warningName;
+    string errorName;
+    ofstream infoFile;
+    ofstream warningFile;
+    ofstream errorFile;
     string getCurrentTime() const;
-    string generateLogFileName(const string& baseName) const;
-    void writeLog(const string& level, const string& message);
+    string generateLogFileName(const string& level) const;
+    void writeLog(ofstream& file, const string& level, const string& message);
 };
 
 #endif

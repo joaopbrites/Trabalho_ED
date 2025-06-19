@@ -7,25 +7,6 @@
 #include "Logger.hpp"
 #include <iostream>
 
-void BlocoRegistros::atualizarMetadadosMax()
-{
-    int iterador = 0;
-    uint32_t sentinela = 0;
-    while (iterador < REGRAS::TAMANHO_BUFFER && sentinela < this->cabecalho.qtd_registros_validos)
-    {
-        Registro aux = this->arrayDados[iterador];
-        if (aux.getStatus() == FLAGS::ATIVO)
-        {
-            if (aux.getChavePrimaria() > this->maiorElemento)
-            {
-                this->maiorElemento = aux.getChavePrimaria();
-            }
-            sentinela++;
-        }
-        iterador++;
-    }
-}
-
 bool BlocoRegistros::estaCheio()
 {
     return this->cabecalho.qtd_registros_validos >= REGRAS::QUANTIDADE_REGISTROS;
@@ -43,7 +24,9 @@ BlocoRegistros::BlocoRegistros(const char buffer[], size_t tamanhoBuffer, Logger
 {
     if (buffer == nullptr || tamanhoBuffer < sizeof(cabecalhoParaBloco))
     {
-        log->warning("Tamanho Buffer no constrtor desserializador menor que o cabeçalho");
+        if (log) {
+            log->warning("Tamanho Buffer no constrtor desserializador menor que o cabeçalho");
+        }
         this->esvaziar();
         return;
     }
@@ -71,38 +54,47 @@ BlocoRegistros::BlocoRegistros(const char buffer[], size_t tamanhoBuffer, Logger
 }
 bool BlocoRegistros::push_back(const Registro &novo)
 {
-    if (this->estaCheio())
+    if (this->estaCheio() || novo.getStatus() != FLAGS::ATIVO)
     {
+        if (log) log->error("Bloco_esta_cheio_ou_registro_invalido");
         return false;
     }
+    
     this->arrayDados[this->cabecalho.qtd_registros_validos] = novo;
-    this->atualizarMetadadosMax();
+    this->cabecalho.qtd_registros_validos++;
+    
+    if (novo.getChavePrimaria() > this->maiorElemento)
+    {
+        this->maiorElemento = novo.getChavePrimaria();
+    }
+    
     return true;
 }
 bool BlocoRegistros::push_position(const Registro &novo, uint32_t pos)
 {
-    if (pos > this->cabecalho.qtd_registros_validos)
+    if (pos > this->cabecalho.qtd_registros_validos || 
+        this->estaCheio() || 
+        novo.getStatus() != FLAGS::ATIVO)
     {
+        if (log) log->error("Posicao_invalida_ou_bloco_cheio");
         return false;
     }
-    if (this->estaCheio())
-    {
-        return false;
-    }
+
     if (this->arrayDados[pos].getStatus() != FLAGS::ATIVO)
     {
         this->arrayDados[pos] = novo;
     }
     else
     {
-        uint32_t i = this->cabecalho.qtd_registros_validos;
-        while (i >= pos)
+        // Move os registros para abrir espaço
+        for (uint32_t i = this->cabecalho.qtd_registros_validos; i > pos; i--)
         {
-            this->arrayDados[i + 1] = this->arrayDados[i];
-            i--;
+            this->arrayDados[i] = this->arrayDados[i-1];
         }
         this->arrayDados[pos] = novo;
     }
+    
+    this->cabecalho.qtd_registros_validos++;
     this->atualizarMetadadosMax();
     return true;
 }
@@ -189,32 +181,47 @@ void BlocoRegistros::ordenarDecrescente()
 
 bool BlocoRegistros::pullMaiorElemento(Registro &registroDeSaida)
 {
-    cout << this->maiorElemento;
-    float chaveMax = this->maiorElemento;
+    if (this->cabecalho.qtd_registros_validos == 0)
+    {
+        if (log) log->warning("Tentativa_de_remover_de_bloco_vazio");
+        return false;
+    }
+
     for (int i = 0; i < REGRAS::TAMANHO_BUFFER; ++i)
     {
-        if (arrayDados[i].getStatus() == FLAGS::ATIVO && arrayDados[i].getChavePrimaria() == chaveMax)
+        if (arrayDados[i].getStatus() == FLAGS::ATIVO && 
+            arrayDados[i].getChavePrimaria() == this->maiorElemento)
         {
             registroDeSaida = arrayDados[i];
-            arrayDados[i].setStatus(FLAGS::REMOVIDO); // ou VAZIO, conforme sua lógica
+            arrayDados[i].setStatus(FLAGS::REMOVIDO);
             this->cabecalho.qtd_registros_validos--;
             this->atualizarMetadadosMax();
             return true;
         }
     }
-    return false; // Nenhum registro válido encontrado
+    
+    if (log) log->error("Maior_elemento_nao_encontrado");
+    return false;
 }
-
 bool BlocoRegistros::getMaiorRegistro(Registro &registroDeSaida) const
 {
+    if (this->cabecalho.qtd_registros_validos == 0)
+    {
+        if (log) log->warning("Bloco_vazio");
+        return false;
+    }
+
     for (int i = 0; i < REGRAS::TAMANHO_BUFFER; ++i)
     {
-        if (arrayDados[i].getStatus() == FLAGS::ATIVO && arrayDados[i].getChavePrimaria() == maiorElemento)
+        if (arrayDados[i].getStatus() == FLAGS::ATIVO && 
+            arrayDados[i].getChavePrimaria() == this->maiorElemento)
         {
-            registroDeSaida = arrayDados[i]; 
+            registroDeSaida = arrayDados[i];
             return true;
         }
     }
+    
+    if (log) log->error("Maior_elemento_nao_encontrado");
     return false;
 }
 void BlocoRegistros::esvaziar()
@@ -228,3 +235,23 @@ void BlocoRegistros::esvaziar()
         this->arrayDados[i].setStatus(FLAGS::VAZIO);
     }
 }
+
+void BlocoRegistros::atualizarMetadadosMax()
+{
+    this->maiorElemento = INVALID_VALUES::CHAVE_MAX_NO_BLOCO;
+    uint32_t count = 0;
+    
+    for (int i = 0; i < REGRAS::TAMANHO_BUFFER && count < this->cabecalho.qtd_registros_validos; i++)
+    {
+        if (this->arrayDados[i].getStatus() == FLAGS::ATIVO)
+        {
+            if (this->arrayDados[i].getChavePrimaria() > this->maiorElemento)
+            {
+                this->maiorElemento = this->arrayDados[i].getChavePrimaria();
+            }
+            count++;
+        }
+    }
+}
+
+

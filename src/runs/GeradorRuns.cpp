@@ -5,11 +5,10 @@
 #include "GravarBinBlocos.hpp"
 #include "GeradorNomeRun.hpp"
 
-
 using namespace std;
 
 GerarRuns::GerarRuns(LeitorCSV *leitorPtr, Logger *logPtr, GerarNomeRun &pNome)
-    : leitor(leitorPtr), log(logPtr), indice(0), nome(&pNome){}
+    : leitor(leitorPtr), log(logPtr), indice(0), nome(&pNome) {}
 
 GerarRuns::~GerarRuns() {}
 
@@ -21,24 +20,32 @@ bool GerarRuns::gerarRun()
             log->error("Arquivo de leitura contém erro");
         return false;
     }
+    BlocoRegistros saida(log);
     while (!leitor->chegouAoFim())
     {
-        BufferClass buffer(*leitor, log);
+        BufferClass buffer(log);
+        BlocoRegistros bAux(log);
+        for (int i =0; i < REGRAS::QUANTIDADES_DE_SLOTS_BUFFER;i++)
+        {
+            leitor->gerarBloco(bAux);
+            buffer.setSlot(i, bAux);
+        }
         string nomeArquivo = nome->getNomeRun();
         GravadorDeBlocos gravador(nomeArquivo, log);
-        // Escreve todos os blocos do buffer no arquivo
+        // Escreve todos os blocos do buffer no arquiv
         while (!buffer.bufferVazio())
         {
-            BlocoRegistros saida;
             Registro maior;
-            for (int i = 0; i < REGRAS::OCUPACAO_POR_BLOCO && buffer.pullMaior(maior);i++)
+            while (buffer.pullMaior(maior))
             {
                 saida.push_back(maior);
-            }
-            gravador.escreverBloco(saida);
+                if (saida.estaCheio())
+                {
+                    gravador.escreverBloco(saida);
+                    saida.esvaziar();
+                }
+            } 
         }
-        if (log)
-            log->info("Run numero (" + to_string(indice) + ") gerada e salva em: " + nomeArquivo);
         indice++;
     } // Avança o índice para a próxima run
     return true;

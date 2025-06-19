@@ -8,13 +8,13 @@ LeitorBin::LeitorBin(const string caminho, Logger *pLog)
 {
     arquivoEntrada.open(caminho, ios::binary);
     if (!arquivoEntrada.is_open()) {
-        log->error("Erro ao abrir arquivo de entrada para leitura.");
+        if (log) log->error("Erro ao abrir arquivo de entrada para leitura.");
         return;
     }
     // Lê o cabeçalho global do arquivo
     arquivoEntrada.read(reinterpret_cast<char*>(&cabecalhoArquivo), sizeof(cabecalhoParaArquivo));
     if (!arquivoEntrada) {
-        log->error("Erro ao ler o cabeçalho global do arquivo.");
+        if (log) log->error("Erro ao ler o cabeçalho global do arquivo.");
         arquivoEntrada.close();
     }
 }
@@ -50,7 +50,7 @@ bool LeitorBin::lerProximoBloco(BlocoRegistros& blocoSaida) {
     arquivoEntrada.read(buffer + sizeof(cabecalhoParaBloco), tamanhoRegistro * qtd);
     if (!arquivoEntrada) {
         delete[] buffer;
-        log->error("Erro ao ler registros do bloco.");
+        if (log) log->error("Erro ao ler registros do bloco.");
         return false;
     }
 

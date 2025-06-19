@@ -16,7 +16,7 @@ private:
     ofstream arquivoSaida;
     cabecalhoParaArquivo cabecalhoArquivo;
     Logger* log;
-
+    string nomeAquivo;
 public:
     GravadorDeBlocos(const string caminhoSaida, Logger *pLog);
     ~GravadorDeBlocos();

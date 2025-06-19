@@ -15,13 +15,8 @@ using namespace std;
 
 int GERAR_ARQUIV_TESTE()
 {
-    Logger logger("log_gerador.txt");
-
-    const char *caminhoSaidaBin = "../input/dados_entrada.bin";
-    const char *caminhoSaidaTxt = "../input/dados_entrada.txt";
-    GravadorDeBlocos gravador(caminhoSaidaBin, &logger);
+    const char *caminhoSaidaTxt = "./input/dados_entrada.txt";
     ofstream txtOut(caminhoSaidaTxt);
-
     srand(time(nullptr));
     int qtd_linhas = 200; // Gere quantas linhas quiser
     int ano = 1986;
@@ -56,7 +51,6 @@ int GERAR_ARQUIV_TESTE()
     }
 
     txtOut.close();
-    logger.info("Arquivo de entrada CSV gerado com sucesso.");
     return 0;
 }
 // Função auxiliar para imprimir os dados do arquivo de saída
@@ -65,24 +59,30 @@ void imprimirDadosArquivoSaida(string caminhoSaida, Logger &logger)
     cout << "\n--- Dados do arquivo de saída ---\n";
     LeitorBin leitorSaida(caminhoSaida, &logger);
     int blocoIdx = 0;
-    while (true)
+    bool sentinela = true;
+    while (sentinela)
     {
         BlocoRegistros bloco(&logger);
         if (!leitorSaida.lerProximoBloco(bloco))
-            break;
-        int qtd = bloco.getContagemRegistros();
-        cout << "Bloco " << blocoIdx << ": " << qtd << " registros\n";
-        for (int i = 0; i < qtd; ++i)
         {
-            Registro reg;
-            bool ok = bloco.getRegistroPorIndice(i, reg);
-            cout << "  [DEBUG] Indice: " << i << ", getRegistroPorIndice: " << ok << ", Status: " << (int)reg.getStatus() << endl;
-            if (ok)
+            int qtd = bloco.getContagemRegistros();
+            cout << "Bloco " << blocoIdx << ": " << qtd << " registros\n";
+            for (int i = 0; i < qtd; ++i)
             {
-                string s = reg.gerarStringImpressao();
-                if (!s.empty())
-                    cout << s << endl;
+                Registro reg;
+                bool ok = bloco.getRegistroPorIndice(i, reg);
+                cout << "  [DEBUG] Indice: " << i << ", getRegistroPorIndice: " << ok << ", Status: " << (int)reg.getStatus() << endl;
+                if (ok)
+                {
+                    string s = reg.gerarStringImpressao();
+                    if (!s.empty())
+                        cout << s << endl;
+                }
             }
+        }
+        else
+        {
+            sentinela = false;
         }
         blocoIdx++;
     }
@@ -91,17 +91,15 @@ void imprimirDadosArquivoSaida(string caminhoSaida, Logger &logger)
 
 int main()
 {
-    Logger logger("saida_log.txt");
+    Logger logger;
     GERAR_ARQUIV_TESTE();
-
-    const char *caminhoEntradaCSV = "../input/dados_entrada.txt";
-
+    const char *caminhoEntradaCSV = "./input/dados_entrada.txt";
     // 1. Particionamento: gera runs a partir do CSV
     LeitorCSV leitorCSV(caminhoEntradaCSV, &logger);
     GerarNomeRun nomeBase(0, 0);
     GerarRuns geradorRuns(&leitorCSV, &logger, nomeBase);
     geradorRuns.gerarRun();
-    int quantidadeRuns = 256;
+    int quantidadeRuns = geradorRuns.quantArquivosGerado();
 
     // 2. Merge: faz merge das runs até restar um único arquivo
     int etapa = 0;
@@ -123,6 +121,6 @@ int main()
     string nomeArquivoFinal = nomeSaida.getNomeRun();
 
     logger.info("Merge K-way finalizado com sucesso.");
-    imprimirDadosArquivoSaida(nomeArquivoFinal, logger);
+    //imprimirDadosArquivoSaida(nomeArquivoFinal, logger);
     return 0;
 }

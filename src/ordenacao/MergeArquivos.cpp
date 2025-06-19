@@ -130,7 +130,7 @@ int MergeArquivos::merge(int quantidade, GerarNomeRun nomeEntrada, GerarNomeRun 
         LeitorBinArray slots(REGRAS::QUANTIDADES_DE_SLOTS_BUFFER, this->log);
         if (!slots.initialize(nomeEntrada.getNomeRun()))
         {
-            this->log->error("Não foi possivel gerar o arquivo de saida");
+            if (this->log) this->log->error("Não foi possivel gerar o arquivo de saida");
             return -1;
         }
 
@@ -141,7 +141,7 @@ int MergeArquivos::merge(int quantidade, GerarNomeRun nomeEntrada, GerarNomeRun 
         // 2. Carregamento inicial dos buffers
         for (int j = 0; j < REGRAS::QUANTIDADES_DE_SLOTS_BUFFER; j++)
         {
-            BlocoRegistros aux;
+            BlocoRegistros aux(this->log);
             if (slots[j] && slots[j]->lerProximoBloco(aux))
             {
                 if (buffer.setSlot(j, aux))
@@ -173,7 +173,7 @@ int MergeArquivos::merge(int quantidade, GerarNomeRun nomeEntrada, GerarNomeRun 
                 {
                     if (!gravador.escreverBloco(blocoSaida))
                     {
-                        this->log->error("Falha ao escrever bloco");
+                        if (this->log) this->log->error("Falha ao escrever bloco");
                     }
                     novaQtd++;
                     blocoSaida.esvaziar();
@@ -185,7 +185,7 @@ int MergeArquivos::merge(int quantidade, GerarNomeRun nomeEntrada, GerarNomeRun 
 
                 if (flagAux == FLAGS::VAZIO)
                 {
-                    BlocoRegistros aux;
+                    BlocoRegistros aux(this->log);
                     if (slots[posRemovida] && slots[posRemovida]->lerProximoBloco(aux))
                     {
                         if (buffer.setSlot(posRemovida, aux))
