@@ -6,6 +6,7 @@ using namespace std;
 GravadorDeBlocos::GravadorDeBlocos(const string caminhoSaida, Logger* pLog)
     : log(pLog)
 {
+           
     arquivoSaida.open(caminhoSaida, ios::binary | ios::out | ios::trunc);
     if (!arquivoSaida.is_open()) {
         log->error("Erro ao abrir o arquivo de saída para escrita.");

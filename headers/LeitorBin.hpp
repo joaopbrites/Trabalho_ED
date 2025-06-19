@@ -1,4 +1,3 @@
-// leitor_blocos.hpp
 #pragma once
 
 #ifndef LEITOR_BIN

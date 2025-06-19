@@ -4,13 +4,14 @@
 #define REGRAS_DE_NEGOCIO
 
 #include <cstdint>
+#include <string>
 
 
 using namespace std;
 
 namespace REGRAS
 {
-    constexpr int QUANTIDADE_REGISTROS = 100;
+    constexpr int QUANTIDADE_REGISTROS = 25;
 
     constexpr int QUANTIDADES_DE_SLOTS_BUFFER = 4;
     constexpr int TAMANHO_BUFFER = QUANTIDADE_REGISTROS / QUANTIDADES_DE_SLOTS_BUFFER;
@@ -22,9 +23,9 @@ namespace REGRAS
     constexpr int TAMANHO_BUFFER_MARGEM = TAMANHO_BUFFER * OCUPACAO_POR_BLOCO;
 
     constexpr char NOME_ARQUIVO_ENTRADA[] = "lms-jun22qtr-csv.csv\0";
-    constexpr char NOME_ARQUIVO_BIN_SAIDA[] = "db.dat";
+    constexpr char NOME_ARQUIVO_BIN_SAIDA[] = "db.dat\0";
     
-    constexpr char CAMINHO_BASE_RUN[] = "../../data/runs/run_etapa_";
+    constexpr const char* CAMINHO_BASE_RUN = "../data/runs/run_etapa_\0";
 
     constexpr int TAMANHO_CAMPO_REG = 100;
 
