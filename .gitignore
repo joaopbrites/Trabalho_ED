@@ -2,7 +2,7 @@
 /data/
 /build/
 /.vscode/
-/input/
+/input/lms-jun22qtr-csv.csv
 
 *.exe
 *.out
