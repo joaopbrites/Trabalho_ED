@@ -11,9 +11,9 @@ using namespace std;
 
 namespace REGRAS
 {
-    constexpr int QUANTIDADE_REGISTROS = 1000;
+    constexpr int QUANTIDADE_REGISTROS = 5000;
 
-    constexpr int QUANTIDADES_DE_SLOTS_BUFFER = 20;
+    constexpr int QUANTIDADES_DE_SLOTS_BUFFER = 5;
     constexpr int TAMANHO_BUFFER = QUANTIDADE_REGISTROS / QUANTIDADES_DE_SLOTS_BUFFER;
 
     //ocupacao por bloco é para deixar uma margem que vai ser usada para inserir por posição 

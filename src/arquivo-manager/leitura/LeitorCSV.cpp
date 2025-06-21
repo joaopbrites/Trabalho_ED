@@ -77,11 +77,22 @@ bool LeitorCSV::lerProximo(Registro &registroOut)
 
             switch (i) {
                 case 0: reference = campo; break;
-                case 1: chavePrimaria = stof(campo); break;
-                case 2: dataValue = stof(campo); break;
+                case 1: 
+                chavePrimaria = stof(campo); break;
+                case 2: 
+                if (campo != "")
+                {
+                    dataValue = stof(campo);
+                }
+                 break;
                 case 3: status = campo; break;
                 case 4: units = campo; break;
-                case 5: magnitude = stoi(campo); break;
+                case 5: 
+                if (campo != "")
+                {
+                    magnitude = stoi(campo);
+                }
+                 break;
                 case 6: subject = campo; break;
                 case 7: group = campo; break;
                 case 8: titulos[0] = campo; break;
