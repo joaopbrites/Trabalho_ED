@@ -1,22 +1,24 @@
-
 #pragma once
 
-#ifndef ARQUIVO_HPP
-#define ARQUIVO_HPP
+#ifndef ARQUIVO_MANAGER
+#define ARQUIVO_MANAGER
 
-#include <string>
+#include "LeitorBin.hpp"
+#include "GravarBinBlocos.hpp"
 
-using namespace std;
-
-class Arquivo
+class ArquivoManager
 {
-    private:
-    string nomeArquivo;
+private:
+    LeitorBin *leitor;
+    GravadorDeBlocos *gravador;
 
-    public:
-    Arquivo(string nome);
-    ~Arquivo();
-    void ordenarArquivoDecrescente();
+public:
+    ArquivoManager(LeitorBin *leitor, GravadorDeBlocos *gravador);
+    void inserirElementoPosicaoEspecifica();
+    void visualizarRegistrosEntrePosicoes();
+    void alterarDadosRegistro();
+    void trocarRegistrosPosicao();
+    void imprimirTodosRegistros();
 };
 
 #endif

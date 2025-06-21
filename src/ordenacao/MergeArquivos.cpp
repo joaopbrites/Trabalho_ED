@@ -8,248 +8,137 @@
 #include "Semafaro.hpp"
 #include "LeitorBinArray.hpp"
 #include "config.hpp"
+#include <iostream>
 
-MergeArquivos::MergeArquivos(Logger *pLog, int quantidadeDeSlotsBuffer, int TamSemafaro) : log(pLog),
-                                                                                           quantidadeDeSlots(quantidadeDeSlotsBuffer),
-                                                                                           buffer(log),
-                                                                                           semafaro(TamSemafaro)
+MergeArquivos::MergeArquivos(int quantidadeDeSlotsBuffer) : quantidadeDeSlots(quantidadeDeSlotsBuffer)
 {
 }
+
+int MergeArquivos::carregarBlocosParaBuffer(LeitorBinArray& slots, Semafaro &semafaroArquivo, int tamVariaveis) {
+    int arqFinalizados = 0;
+    for (int j = 0; j < tamVariaveis; j++) {
+        if (buffer.slotVazio(j) && !semafaroArquivo.PosInvalida(j)) {
+            BlocoRegistros blocoTemporario;
+            if (slots[j] && slots[j]->lerProximoBloco(blocoTemporario)) {
+                if (!buffer.setSlot(j, blocoTemporario)) {
+                    throw runtime_error("Falha ao carregar bloco no buffer");
+                }
+            } else {
+                semafaroArquivo.setPosInvalida(j);
+                arqFinalizados++; // Indica que um arquivo foi completamente processado
+            }
+        }
+    }
+    return arqFinalizados;
+}
+
+void MergeArquivos::processarBuffer(GravadorDeBlocos& gravador, BlocoRegistros& blocoSaida) {
+    bool algumSlotEsvaziou = false;
+    while (!buffer.bufferVazio() && !algumSlotEsvaziou) {
+        Registro registro;
+        bool registroValido = buffer.pullMaiorEvent(registro, algumSlotEsvaziou);
+        if (registroValido) {
+            if (!blocoSaida.push_backMargem(registro)) {
+                if (!gravador.escreverBloco(blocoSaida)) {
+                    throw runtime_error("Falha ao escrever bloco residual");
+                }
+                blocoSaida.esvaziar();
+                blocoSaida.push_back(registro);
+            }
+        }
+    }
+}
+
+int MergeArquivos::merge(int quantidade, GerarNomeRun nomeEntrada, GerarNomeRun nomeSaida) {
+    int novaQtd = 0;
+    int arqProcessados = 0;
+    
+    while (arqProcessados < quantidade) {
+        int tamanhoVariaveis = REGRAS::QUANTIDADES_DE_SLOTS_BUFFER;
+        if ((quantidade - arqProcessados) < tamanhoVariaveis)
+        {
+            tamanhoVariaveis = quantidade - arqProcessados;
+        }
+        LeitorBinArray slots(tamanhoVariaveis);
+        Semafaro semafaroArquivo(tamanhoVariaveis);
+        for  (int i = 0; i < tamanhoVariaveis && arqProcessados < quantidade;i++)
+        {
+            slots.initialize(nomeEntrada.getNomeRun(), i);
+            arqProcessados++;
+        }
+        
+        GravadorDeBlocos gravador(nomeSaida.getNomeRun());
+        BlocoRegistros blocoSaida;
+
+        while (!semafaroArquivo.semafaroInvalido()) {
+            this->carregarBlocosParaBuffer(slots, semafaroArquivo, tamanhoVariaveis);
+            processarBuffer(gravador, blocoSaida);
+        }
+
+        // Escreve bloco residual se houver
+        if (blocoSaida.getContagemRegistros() > 0 && !gravador.escreverBloco(blocoSaida)) {
+            throw std::runtime_error("Falha ao escrever bloco final");
+        }
+        
+        novaQtd++;
+    }
+    return novaQtd;
+}
+
 
 /*int MergeArquivos::merge(int quantidade, GerarNomeRun nomeEntrada, GerarNomeRun nomeSaida)
 {
     int novaQtd = 0;
-
-    for (int i = 0; i < quantidade; i++)
-    {
-        string nomeArquivoSaida = nomeSaida.getNomeRun();
-
-        GravadorDeBlocos gravador(nomeArquivoSaida, this->log);
-        BlocoRegistros blocoSaida(this->log);
-
-        LeitorBin **slots = new LeitorBin *[REGRAS::QUANTIDADES_DE_SLOTS_BUFFER];
-        for (int j = 0; j < REGRAS::QUANTIDADES_DE_SLOTS_BUFFER; j++)
-        {
-            slots[j] = new LeitorBin(nomeEntrada.getNomeRun(), this->log);
-        }
-        Registro vetMaior[REGRAS::QUANTIDADES_DE_SLOTS_BUFFER];
-        for (int j = 0; j < REGRAS::QUANTIDADES_DE_SLOTS_BUFFER; j++)
-        {
-            BlocoRegistros aux;
-            if (slots[j]->lerProximoBloco(aux))
-            {
-                if (buffer.setSlot(j, aux))
-                {
-                    Registro rAux;
-                    buffer.pullMaiorSlot(rAux, j);
-                    vetMaior[j] = rAux;
-                    semafaro.setPosValida(j);
-                }
-            }
-            else
-            {
-                semafaro.setPosInvalida(j);
-            }
-        }
-        while (!this->semafaro.semafaroInvalido())
-        {
-            int posRemovida = 0;
-            if (blocoSaida.getContagemRegistros() >= REGRAS::TAMANHO_BUFFER_MARGEM)
-            {
-                gravador.escreverBloco(blocoSaida);
-                novaQtd++;
-                blocoSaida.esvaziar();
-            }
-            uint8_t flagAux;
-            semafaro.getPosStatus(posRemovida, flagAux);
-            if (flagAux == FLAGS::VAZIO)
-            {
-                BlocoRegistros aux;
-                if (slots[posRemovida]->lerProximoBloco(aux))
-                {
-                    if (buffer.setSlot(posRemovida, aux))
-                    {
-                        Registro rAux;
-                        buffer.pullMaiorSlot(rAux, posRemovida);
-                        vetMaior[posRemovida] = rAux;
-                        semafaro.setPosValida(posRemovida);
-                    }
-                }
-                else
-                {
-                    semafaro.setPosInvalida(posRemovida);
-                }
-            }
-            else if (flagAux == FLAGS::ATIVO)
-            {
-                float cMaior = vetMaior[posRemovida].getChavePrimaria();
-                for (int j = 0; j < REGRAS::QUANTIDADES_DE_SLOTS_BUFFER; j++)
-                {
-                    float chaveAux = vetMaior[j].getChavePrimaria();
-                    if (chaveAux > cMaior)
-                    {
-                        cMaior = chaveAux;
-                        posRemovida = j;
-                    }
-                }
-                if (blocoSaida.push_back(vetMaior[posRemovida]))
-                {
-                    Registro rAux;
-                    if (buffer.pullMaiorSlot(rAux, posRemovida))
-                    {
-                        vetMaior[posRemovida] = rAux;
-                    }
-                    else
-                    {
-                        semafaro.setPosVazia(posRemovida);
-                    }
-                }
-            }
-        }
-        for (int j = 0; j < REGRAS::QUANTIDADES_DE_SLOTS_BUFFER; j++)
-        {
-            delete slots[j];
-        }
-        delete[] slots;
-        if (semafaro.semafaroInvalido())
-        {
-            gravador.escreverBloco(blocoSaida);
-            novaQtd++;
-        }
-    }
-    return novaQtd;
-}*/
-
-int MergeArquivos::merge(int quantidade, GerarNomeRun nomeEntrada, GerarNomeRun nomeSaida)
-{
-    int novaQtd = 0;
-
-    for (int i = 0; i < quantidade; i++)
+    int arqProcessados = 0;
+    while (arqProcessados < quantidade)
     {
         // 1. Inicialização de recursos
-        LeitorBinArray slots(REGRAS::QUANTIDADES_DE_SLOTS_BUFFER, this->log);
-        if (!slots.initialize(nomeEntrada.getNomeRun()))
-        {
-            if (this->log) this->log->error("Não foi possivel gerar o arquivo de saida");
-            return -1;
-        }
+        LeitorBinArray slots(REGRAS::QUANTIDADES_DE_SLOTS_BUFFER);
+        slots.initialize(nomeEntrada.getNomeRun());
+        GravadorDeBlocos gravador(nomeSaida.getNomeRun());
+        BlocoRegistros blocoSaida;
 
-        GravadorDeBlocos gravador(nomeSaida.getNomeRun(), this->log);
-        BlocoRegistros blocoSaida(this->log);
-        Registro vetMaior[REGRAS::QUANTIDADES_DE_SLOTS_BUFFER];
-
-        // 2. Carregamento inicial dos buffers
-        for (int j = 0; j < REGRAS::QUANTIDADES_DE_SLOTS_BUFFER; j++)
+        while (semafaroArquivo.semafaroInvalido())
         {
-            BlocoRegistros aux(this->log);
-            if (slots[j] && slots[j]->lerProximoBloco(aux))
+            for (int j = 0; j < REGRAS::QUANTIDADES_DE_SLOTS_BUFFER; j++)
             {
-                if (buffer.setSlot(j, aux))
+                if (buffer.slotVazio(j))
                 {
-                    Registro rAux;
-                    if (buffer.pullMaiorSlot(rAux, j))
+                    if (!semafaroArquivo.PosInvalida(j))
                     {
-                        vetMaior[j] = rAux;
-                        semafaro.setPosValida(j);
+                        BlocoRegistros bAux;
+                        if (slots[j] && slots[j]->lerProximoBloco(bAux))
+                        {
+                            if (!buffer.setSlot(j, bAux))
+                            {
+                                throw runtime_error("Não foi possivel ajusar o slot do buffer");
+                            }
+                        }
+                        else
+                        {
+                            semafaroArquivo.setPosInvalida(j);
+                            arqProcessados++;
+                        }
                     }
                 }
             }
-            else
+            bool slotEsvaziou = false;
+            while (!buffer.bufferVazio() && !slotEsvaziou)
             {
-                semafaro.setPosInvalida(j);
-            }
-        }
-
-        // 3. Processamento principal
-        bool processamentoAtivo = true;
-        while (processamentoAtivo)
-        {
-            processamentoAtivo = !this->semafaro.semafaroInvalido();
-
-            if (!processamentoAtivo)
-            {
-
-                if (blocoSaida.getContagemRegistros() >= REGRAS::TAMANHO_BUFFER_MARGEM)
-                {
-                    if (!gravador.escreverBloco(blocoSaida))
+                Registro r;
+                bool controller = buffer.pullMaiorEvent(r, slotEsvaziou);
+                if (controller)
+                { // Esvazia o slot
+                    if (!blocoSaida.push_back(r))
                     {
-                        if (this->log) this->log->error("Falha ao escrever bloco");
-                    }
-                    novaQtd++;
-                    blocoSaida.esvaziar();
-                }
-
-                uint8_t flagAux;
-                int posRemovida = 0;
-                semafaro.getPosStatus(posRemovida, flagAux);
-
-                if (flagAux == FLAGS::VAZIO)
-                {
-                    BlocoRegistros aux(this->log);
-                    if (slots[posRemovida] && slots[posRemovida]->lerProximoBloco(aux))
-                    {
-                        if (buffer.setSlot(posRemovida, aux))
+                        if (!gravador.escreverBloco(blocoSaida))
                         {
-                            Registro rAux;
-                            if (buffer.pullMaiorSlot(rAux, posRemovida))
-                            {
-                                vetMaior[posRemovida] = rAux;
-                                semafaro.setPosValida(posRemovida);
-                            }
+                            throw runtime_error("Falha ao escrever bloco residual");
                         }
-                    }
-                    else
-                    {
-                        semafaro.setPosInvalida(posRemovida);
+                        blocoSaida.esvaziar();
+                        blocoSaida.push_back(r); // Adiciona o registro no novo bloco
                     }
                 }
-                else if (flagAux == FLAGS::ATIVO)
-                {
-                    bool encontrado = false;
-                    float cMaior = INVALID_VALUES::CHAVE_REG;
-
-                    // Encontra o maior registro válido
-                    for (int j = 0; j < REGRAS::QUANTIDADES_DE_SLOTS_BUFFER; j++)
-                    {
-                        uint8_t status;
-                        semafaro.getPosStatus(j, status);
-
-                        if (status == FLAGS::ATIVO)
-                        {
-                            float chaveAtual = vetMaior[j].getChavePrimaria();
-                            if (!encontrado || chaveAtual > cMaior)
-                            {
-                                cMaior = chaveAtual;
-                                posRemovida = j;
-                                encontrado = true;
-                            }
-                        }
-                    }
-
-                    if (encontrado)
-                    {
-                        if (blocoSaida.push_back(vetMaior[posRemovida]))
-                        {
-                            Registro rAux;
-                            if (buffer.pullMaiorSlot(rAux, posRemovida))
-                            {
-                                vetMaior[posRemovida] = rAux;
-                            }
-                            else
-                            {
-                                semafaro.setPosVazia(posRemovida);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        semafaro.setAllInvalid();
-                    }
-                }
-            }
-            else
-            {
-                processamentoAtivo = false;
             }
         }
         if (blocoSaida.getContagemRegistros() > 0)
@@ -258,8 +147,9 @@ int MergeArquivos::merge(int quantidade, GerarNomeRun nomeEntrada, GerarNomeRun 
             {
                 throw std::runtime_error("Falha ao escrever bloco final");
             }
-            novaQtd++;
         }
+        novaQtd++;
     }
     return novaQtd;
 }
+*/

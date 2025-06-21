@@ -6,20 +6,19 @@
 #include "type_block.hpp"
 #include "type_dado.hpp"
 
-LeitorCSV::LeitorCSV(const char *caminhoCSV, Logger *logger) : log(logger), cabecalhoIgnorado(false)
+LeitorCSV::LeitorCSV(const char *caminhoCSV) 
 {
     if (!caminhoCSV) {
-        if (log) log->error("Caminho do CSV é nullptr");
-        throw std::invalid_argument("Caminho do CSV é nullptr");
+        throw runtime_error("Caminho do CSV é nullptr");
     }
 
     arquivo.open(caminhoCSV);
     if (!arquivo.is_open()) {
-        if (log) log->error(std::string("Falha ao abrir o arquivo CSV: ") + caminhoCSV);
-        throw std::runtime_error("Falha ao abrir arquivo CSV");
+        throw runtime_error(string("Falha ao abrir o arquivo CSV: ") + caminhoCSV);
     }
 
-    if (log) log->info(std::string("Arquivo CSV aberto com sucesso: ") + caminhoCSV);
+    bufferLinha.clear();
+    getline(arquivo, bufferLinha);
 }
 
 LeitorCSV::~LeitorCSV()
@@ -36,20 +35,19 @@ void LeitorCSV::fechar()
 {
     if (arquivo.is_open()) {
         arquivo.close();
-        if (log) log->info("Arquivo CSV fechado");
     }
 }
 
 bool LeitorCSV::lerProximo(Registro &registroOut)
 {
     if (!estaAberto()) {
-        if (log) log->warning("Tentativa de leitura com arquivo fechado");
+        throw runtime_error("Tentativa de leitura com arquivo fechado");
         return false;
     }
 
     bufferLinha.clear();
     if (!getline(arquivo, bufferLinha)) {
-        if (log) log->info("Fim do arquivo CSV alcançado");
+        //throw runtime_error("Não foi possível capturar a linha no arquivo CSV");
         return false;
     }
 
@@ -69,8 +67,7 @@ bool LeitorCSV::lerProximo(Registro &registroOut)
 
         for (int i = 0; i < 13; ++i) {
             if (!getline(ss, campo, ',')) {
-                if (log) log->warning("Linha incompleta no CSV");
-                break;
+                throw runtime_error("Linha incompleta no CSV");
             }
 
             // Remove aspas se existirem
@@ -95,7 +92,7 @@ bool LeitorCSV::lerProximo(Registro &registroOut)
             }
         }
 
-        registroOut = Registro(chavePrimaria, log);
+        registroOut = Registro(chavePrimaria);
         registroOut.setStatus(FLAGS::ATIVO);
         registroOut.setReference(reference);
         registroOut.setDataValue(dataValue);
@@ -108,8 +105,8 @@ bool LeitorCSV::lerProximo(Registro &registroOut)
 
         return true;
     } 
-    catch (const std::exception &e) {
-        if (log) log->error(std::string("Erro ao processar linha do CSV: ") + e.what());
+    catch (const exception &e) {
+        throw runtime_error(string("Erro ao processar linha do CSV: ") + e.what());
         return false;
     }
 }
@@ -117,23 +114,20 @@ bool LeitorCSV::lerProximo(Registro &registroOut)
 bool LeitorCSV::gerarBloco(BlocoRegistros &saida)
 {
     if (!estaAberto()) {
-        if (log) log->warning("Tentativa de gerar bloco com arquivo fechado");
+        throw runtime_error("Tentativa de gerar bloco com arquivo fechado");
         return false;
     }
 
-    BlocoRegistros bAux(log);
+    BlocoRegistros bAux;
     Registro aux;
     bool blocoCompleto = false;
-
     while (!blocoCompleto && !chegouAoFim()) {
         if (!lerProximo(aux)) {
-            if (log) log->warning("Erro ao ler registro do CSV");
-            continue;
+            //throw runtime_error("Erro ao ler registro do CSV");
+           blocoCompleto = true;
         }
-
-        if (!bAux.push_back(aux)) {
+        else if (!bAux.push_back(aux)) {
             blocoCompleto = true;
-            if (log) log->info("Bloco preenchido completamente");
         }
     }
 

@@ -15,30 +15,32 @@ bool BufferClass::atualizaSlotMaior()
     for (int i = 0; i < REGRAS::QUANTIDADES_DE_SLOTS_BUFFER; i++)
     {
         Registro aux;
-        if (this->buffer[i].getMaiorRegistro(aux))
+        if (!this->buffer[i].estaVazio())
         {
-            if (maior.getStatus() != FLAGS::ATIVO)
+            if (this->buffer[i].getMaiorRegistro(aux))
             {
-                this->slotMaiorElemento = i;
-                maior = aux;
-            }
-            else if (aux.getChavePrimaria() > maior.getChavePrimaria())
-            {
-                this->slotMaiorElemento = i;
-                maior = aux;
+                if (maior.getStatus() != FLAGS::ATIVO)
+                {
+                    this->slotMaiorElemento = i;
+                    maior = aux;
+                }
+                else if (aux.getChavePrimaria() > maior.getChavePrimaria())
+                {
+                    this->slotMaiorElemento = i;
+                    maior = aux;
+                }
             }
         }
     }
     return true;
 }
 
-BufferClass::BufferClass(Logger *pLog) : log(pLog) {}
+BufferClass::BufferClass() {}
 
-
-BufferClass::BufferClass(LeitorBin *leitor, Logger *pLog) : log(pLog)
+BufferClass::BufferClass(LeitorBin *leitor)
 {
     bool sentinela = false;
-    BlocoRegistros aux(log);
+    BlocoRegistros aux;
     for (int i = 0; i < REGRAS::QUANTIDADES_DE_SLOTS_BUFFER && !sentinela; i++)
     {
         if (leitor->lerProximoBloco(aux))
@@ -49,13 +51,10 @@ BufferClass::BufferClass(LeitorBin *leitor, Logger *pLog) : log(pLog)
         else if (leitor->chegouAoFim())
         {
             sentinela = true;
-            if (log)
-                log->info("Leitura do arquivo bin chegou ao fim");
         }
         else
         {
-            if (log)
-                log->warning("Erro desconhecido na leitura do bloco durante a construção do buffer");
+            throw runtime_error("Erro desconhecido na leitura do bloco durante a construção do buffer");
         }
     }
     this->atualizaSlotMaior();
@@ -77,19 +76,34 @@ bool BufferClass::slotVazio(int indice)
 {
     if (indice >= REGRAS::QUANTIDADES_DE_SLOTS_BUFFER)
     {
-        if (log)
-            log->error("Tentativa de acesso em posicao invalida no buffer");
+        throw runtime_error("Tentativa de acesso em posicao invalida no buffer");
         return false;
     }
     return buffer[indice].getContagemRegistros() == 0;
 }
 
+bool BufferClass::pullMaiorEvent(Registro &Saida, bool &slotEsvaziou)
+{
+    if (bufferVazio())
+    {
+        return false;
+    }
+    this->buffer[slotMaiorElemento].pullMaiorElemento(Saida);
+    this->atualizaSlotMaior();
+    slotEsvaziou = false;
+    for (int i = 0; i < REGRAS::QUANTIDADES_DE_SLOTS_BUFFER; i++)
+    {
+        if (this->slotVazio(i))
+        {
+            slotEsvaziou = true;
+        }
+    }
+    return true;
+}
 bool BufferClass::pullMaior(Registro &Saida)
 {
     if (bufferVazio())
     {
-        if (log)
-            log->error("Buffer vazio para retirar maior");
         return false;
     }
     this->buffer[slotMaiorElemento].pullMaiorElemento(Saida);
@@ -100,8 +114,7 @@ bool BufferClass::pullMaiorSlot(Registro &Saida, int slot)
 {
     if (slotVazio(slot))
     {
-        if (log)
-            log->error("Buffer vazio para retirar maior");
+        throw runtime_error("Buffer vazio para retirar maior");
         return false;
     }
     this->buffer[slot].pullMaiorElemento(Saida);
@@ -116,8 +129,7 @@ bool BufferClass::setSlot(int indice, BlocoRegistros Novo)
 {
     if (indice >= REGRAS::QUANTIDADES_DE_SLOTS_BUFFER)
     {
-        if (this->log)
-            this->log->error("Tentativa de acesso em posicao invalida no buffer");
+        throw runtime_error("Tentativa de acesso em posicao invalida no buffer");
         return false;
     }
     this->buffer[indice] = Novo;

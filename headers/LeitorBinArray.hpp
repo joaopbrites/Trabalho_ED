@@ -4,18 +4,16 @@
 #define LEITOR_BIN_ARRAY
 
 #include "LeitorBin.hpp"
-#include "Logger.hpp"
 
 class LeitorBinArray
 {
     LeitorBin **m_slots;
     int m_size;
-    Logger *m_log;
 
 public:
-    LeitorBinArray(int size, Logger *log);
+    LeitorBinArray(int size);
     ~LeitorBinArray();
-    bool initialize(const std::string &nomeEntrada);
+    bool initialize(const string &nomeEntrada, int pos);
     LeitorBin *operator[](int index);
 };
 

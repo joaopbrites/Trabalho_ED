@@ -9,8 +9,8 @@ using namespace std;
 
 
 struct cabecalhoParaBloco {
-    uint32_t id_bloco;            // Identificador único deste bloco
-    uint32_t qtd_registros_validos; // Quantidade de registros atualmente ocupados no bloco
+    uint64_t id_bloco;            // Identificador único deste bloco
+    uint64_t qtd_registros_validos; // Quantidade de registros atualmente ocupados no bloco
 };
 
 #endif

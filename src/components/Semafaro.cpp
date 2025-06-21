@@ -1,6 +1,7 @@
 #include "config.hpp"
 #include <cstdint>
 #include "Semafaro.hpp"
+#include <stdexcept>
 
 Semafaro::Semafaro(int tamDesejado) : tamanho(tamDesejado)
 {
@@ -50,17 +51,29 @@ bool Semafaro::getPosStatus(int pos, uint8_t &saida)
     saida = semafaro[pos];
     return true;
 }
-bool Semafaro::getPosVazia(int &saida)
+bool Semafaro::PosVazia(int pos)
 {
-    for (int i = 0; i < this->tamanho; i++)
+    if (pos >= tamanho)
     {
-        if (semafaro[i] == FLAGS::VAZIO)
-        {
-            saida = semafaro[i];
-            return true;
-        }
+        throw runtime_error("Posição maior que a permitida");
     }
-    return false;
+    return semafaro[pos] == FLAGS::VAZIO;
+}
+bool Semafaro::PosInvalida(int pos)
+{
+    if (pos >= tamanho)
+    {
+        throw runtime_error("Posição maior que a permitida");
+    }
+    return semafaro[pos] == FLAGS::INVALIDO;
+}
+bool Semafaro::PosValida(int pos)
+{
+    if (pos >= tamanho)
+    {
+        throw runtime_error("Posição maior que a permitida");
+    }
+    return semafaro[pos] == FLAGS::ATIVO;
 }
 bool Semafaro::semafaroInvalido()
 {

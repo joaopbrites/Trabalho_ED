@@ -11,12 +11,13 @@ add_executable(
     src/arquivo-manager/leitura/LeitorBin.cpp 
     src/arquivo-manager/leitura/LeitorCSV.cpp
     src/arquivo-manager/leitura/LeitorBinArray.cpp
+    src/arquivo-manager/ArquivoManager.cpp
 
     src/components/Buffer.cpp
     src/components/type_block.cpp
     src/components/type_dado.cpp
-    src/components/Logger.cpp
     src/components/Semafaro.cpp 
+    src/components/Inicializador.cpp
 
     src/ordenacao/MergeArquivos.cpp
     src/ordenacao/MergeSort.cpp

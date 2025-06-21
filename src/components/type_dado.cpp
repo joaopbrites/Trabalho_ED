@@ -3,16 +3,12 @@
 #include "type_dado.hpp"
 #include <cstring>
 #include <sstream>
-#include "Logger.hpp"
+
 
 using namespace std;
 
 bool Registro::copiarString(char *destino, const string &origem)
 {
-    if (origem.size() >= REGRAS::TAMANHO_CAMPO_REG)
-    {
-        log->warning("Um campo do registro de chave: " + to_string(this->chave_primaria) + " foi truncado");
-    }
     strncpy(destino, origem.c_str(), REGRAS::TAMANHO_CAMPO_REG);
     destino[REGRAS::TAMANHO_CAMPO_REG - 1] = '\0'; // Garante terminação nula
     return true;
@@ -25,12 +21,12 @@ Registro::Registro() : series_reference(),
                        magnitude(INVALID_VALUES::MAGNITUDE),
                        subject(),
                        group(),
-                       series_title(),
-                       log(nullptr)
+                       series_title()
+                       
 {
     cabecalhoRegistro.flags = FLAGS::VAZIO;
 }
-Registro::Registro(float pChave, Logger* pLog) : series_reference(),
+Registro::Registro(float pChave) : series_reference(),
                                                  chave_primaria(pChave),
                                                  data_value(INVALID_VALUES::DATA_VALUE),
                                                  status(),
@@ -38,12 +34,48 @@ Registro::Registro(float pChave, Logger* pLog) : series_reference(),
                                                  magnitude(INVALID_VALUES::MAGNITUDE),
                                                  subject(),
                                                  group(),
-                                                 series_title(),
-                                                 log(pLog)
+                                                 series_title()
+                                                 
 
 {
     cabecalhoRegistro.flags = FLAGS::VAZIO;
 }
+
+// Construtor de cópia
+Registro::Registro(const Registro& other) {
+    this->cabecalhoRegistro = other.cabecalhoRegistro;
+    memcpy(this->series_reference, other.series_reference, REGRAS::TAMANHO_CAMPO_REG);
+    this->chave_primaria = other.chave_primaria;
+    this->data_value = other.data_value;
+    memcpy(this->status, other.status, REGRAS::TAMANHO_CAMPO_REG);
+    memcpy(this->units, other.units, REGRAS::TAMANHO_CAMPO_REG);
+    this->magnitude = other.magnitude;
+    memcpy(this->subject, other.subject, REGRAS::TAMANHO_CAMPO_REG);
+    memcpy(this->group, other.group, REGRAS::TAMANHO_CAMPO_REG);
+    for (int i = 0; i < 4; ++i) {
+        memcpy(this->series_title[i], other.series_title[i], REGRAS::TAMANHO_CAMPO_REG);
+    }
+}
+
+// Operador de cópia
+Registro& Registro::operator=(const Registro& other) {
+    if (this != &other) {
+        this->cabecalhoRegistro = other.cabecalhoRegistro;
+        memcpy(this->series_reference, other.series_reference, REGRAS::TAMANHO_CAMPO_REG);
+        this->chave_primaria = other.chave_primaria;
+        this->data_value = other.data_value;
+        memcpy(this->status, other.status, REGRAS::TAMANHO_CAMPO_REG);
+        memcpy(this->units, other.units, REGRAS::TAMANHO_CAMPO_REG);
+        this->magnitude = other.magnitude;
+        memcpy(this->subject, other.subject, REGRAS::TAMANHO_CAMPO_REG);
+        memcpy(this->group, other.group, REGRAS::TAMANHO_CAMPO_REG);
+        for (int i = 0; i < 4; ++i) {
+            memcpy(this->series_title[i], other.series_title[i], REGRAS::TAMANHO_CAMPO_REG);
+        }
+    }
+    return *this;
+}
+
 void Registro::desserializar(const char *buffer)
 {
     size_t offset = 0;
@@ -172,7 +204,7 @@ void Registro::setUnits(const string &pUnits)
     copiarString(units, pUnits);
 }
 
-void Registro::setMagnitude(int pMagnitude)
+void Registro::setMagnitude(const int pMagnitude)
 {
     magnitude = pMagnitude;
 }

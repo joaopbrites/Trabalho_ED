@@ -6,7 +6,6 @@
 #include "cabecalhoDado.hpp"
 #include <string>
 #include "config.hpp"
-#include "Logger.hpp"
 
 using namespace std;
 
@@ -23,13 +22,14 @@ private:
     char subject[REGRAS::TAMANHO_CAMPO_REG];
     char group[REGRAS::TAMANHO_CAMPO_REG];
     char series_title[4][REGRAS::TAMANHO_CAMPO_REG];
-    Logger* log;
 
     bool copiarString(char *destino, const string &origem);
 
 public:
     Registro();
-    Registro(float pChave, Logger *pLog);
+    Registro(float pChave);
+    Registro(const Registro& other); // Construtor de cópia
+    Registro& operator=(const Registro& other); // Operador de cópia
     void desserializar(const char *buffer);
     float getChavePrimaria() const;
     string gerarStringImpressao() const;

@@ -13,10 +13,9 @@ class LeitorBin {
 private:
     ifstream arquivoEntrada;
     cabecalhoParaArquivo cabecalhoArquivo;
-    Logger* log;
 
 public:
-    LeitorBin(const string caminho, Logger *pLog);
+    LeitorBin(const string caminho);
     ~LeitorBin();
     bool lerProximoBloco(BlocoRegistros& bloco);
     bool posicionarParaBloco(int indice);

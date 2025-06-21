@@ -3,13 +3,13 @@
 
 using namespace std;
 
-GravadorDeBlocos::GravadorDeBlocos(const string caminhoSaida, Logger* pLog)
-    : log(pLog), nomeAquivo(caminhoSaida)
+GravadorDeBlocos::GravadorDeBlocos(const string caminhoSaida)
+    : nomeAquivo(caminhoSaida)
 {
            
     arquivoSaida.open(caminhoSaida, ios::binary | ios::out | ios::trunc);
     if (!arquivoSaida.is_open()) {
-        log->error("Erro ao abrir o arquivo de saída para escrita.");
+        throw runtime_error("Erro ao abrir o arquivo de saída para escrita.");
         return;
     }
 
@@ -21,7 +21,7 @@ GravadorDeBlocos::GravadorDeBlocos(const string caminhoSaida, Logger* pLog)
     // Reserva espaço para o cabeçalho (será sobrescrito ao final)
     arquivoSaida.write(reinterpret_cast<const char*>(&cabecalhoArquivo), sizeof(cabecalhoParaArquivo));
     if (!arquivoSaida) {
-        log->error("Erro ao escrever o cabeçalho inicial do arquivo.");
+        throw runtime_error("Erro ao escrever o cabeçalho inicial do arquivo.");
         arquivoSaida.close();
     }
 }
@@ -32,7 +32,7 @@ GravadorDeBlocos::~GravadorDeBlocos() {
 
 bool GravadorDeBlocos::escreverBloco(BlocoRegistros& bloco) {
     if (!arquivoSaida.is_open()) {
-        log->error("Tentativa de escrever em arquivo inválido.");
+        throw runtime_error("Tentativa de escrever em arquivo inválido.");
         return false;
     }
 
@@ -45,7 +45,7 @@ bool GravadorDeBlocos::escreverBloco(BlocoRegistros& bloco) {
     // Escreve o cabeçalho do bloco
     arquivoSaida.write(reinterpret_cast<const char*>(&cabBloco), sizeof(cabecalhoParaBloco));
     if (!arquivoSaida) {
-        log->error("Erro ao escrever o cabeçalho do bloco.");
+        throw runtime_error("Erro ao escrever o cabeçalho do bloco.");
         return false;
     }
 
@@ -55,14 +55,25 @@ bool GravadorDeBlocos::escreverBloco(BlocoRegistros& bloco) {
     char* buffer = new char[tamanhoRegistro];
     for (uint32_t i = 0; i < cabBloco.qtd_registros_validos; ++i) {
         if (!bloco.getRegistroPorIndice(i, temp)) {
-            log->error("Erro ao recuperar registro do bloco para gravação.");
+            throw runtime_error("Erro ao recuperar registro do bloco para gravação.");
             delete[] buffer;
             return false;
         }
         temp.serializar(buffer);
         arquivoSaida.write(buffer, tamanhoRegistro);
         if (!arquivoSaida) {
-            log->error("Erro ao serializar registro do bloco.");
+            throw runtime_error("Erro ao serializar registro do bloco.");
+            delete[] buffer;
+            return false;
+        }
+    }
+    // Grava registros vazios para completar o bloco
+    for (uint32_t i = cabBloco.qtd_registros_validos; i < REGRAS::TAMANHO_BUFFER; ++i) {
+        Registro vazio; // construtor padrão já define como VAZIO
+        vazio.serializar(buffer);
+        arquivoSaida.write(buffer, tamanhoRegistro);
+        if (!arquivoSaida) {
+            throw runtime_error("Erro ao serializar registro vazio do bloco.");
             delete[] buffer;
             return false;
         }
@@ -84,11 +95,7 @@ void GravadorDeBlocos::finalizar(){
     arquivoSaida.seekp(0, ios::beg);
     arquivoSaida.write(reinterpret_cast<const char*>(&cabecalhoArquivo), sizeof(cabecalhoParaArquivo));
     if (!arquivoSaida) {
-        log->error("Erro ao reescrever o cabeçalho final do arquivo.");
-    }
-    else
-    {
-        log->info("Bloco de nome: " + nomeAquivo + " gravado com "+ to_string(cabecalhoArquivo.qtd_total_registros_no_arquivo)+ " bloco\n");
+        throw runtime_error("Erro ao reescrever o cabeçalho final do arquivo.");
     }
 
     arquivoSaida.close();

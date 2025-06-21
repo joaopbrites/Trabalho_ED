@@ -3,18 +3,17 @@
 
 using namespace std;
 
-LeitorBin::LeitorBin(const string caminho, Logger *pLog)
-    : log(pLog)
+LeitorBin::LeitorBin(const string caminho)
 {
     arquivoEntrada.open(caminho, ios::binary);
     if (!arquivoEntrada.is_open()) {
-        if (log) log->error("Erro ao abrir arquivo de entrada para leitura.");
+        throw runtime_error("Erro ao abrir arquivo de entrada para leitura.");
         return;
     }
     // Lê o cabeçalho global do arquivo
     arquivoEntrada.read(reinterpret_cast<char*>(&cabecalhoArquivo), sizeof(cabecalhoParaArquivo));
     if (!arquivoEntrada) {
-        if (log) log->error("Erro ao ler o cabeçalho global do arquivo.");
+        throw runtime_error("Erro ao ler o cabeçalho global do arquivo.");
         arquivoEntrada.close();
     }
 }
@@ -37,28 +36,26 @@ bool LeitorBin::lerProximoBloco(BlocoRegistros& blocoSaida) {
     arquivoEntrada.read(reinterpret_cast<char*>(&cabecalhoBloco), sizeof(cabecalhoParaBloco));
     if (!arquivoEntrada) return false;
 
-    // Calcula quantos registros devem ser lidos
-    size_t qtd = static_cast<size_t>(cabecalhoBloco.qtd_registros_validos);
+    // Sempre lê o bloco inteiro, independente da quantidade de registros válidos
     size_t tamanhoRegistro = Registro::sizeofRegistro();
-    size_t tamanhoBuffer = sizeof(cabecalhoParaBloco) + qtd * tamanhoRegistro;
+    size_t tamanhoBuffer = sizeof(cabecalhoParaBloco) + REGRAS::TAMANHO_BUFFER * tamanhoRegistro;
     char* buffer = new char[tamanhoBuffer];
 
     // Copia o cabeçalho para o início do buffer
     memcpy(buffer, &cabecalhoBloco, sizeof(cabecalhoParaBloco));
 
-    // Lê os registros para o buffer após o cabeçalho
-    arquivoEntrada.read(buffer + sizeof(cabecalhoParaBloco), tamanhoRegistro * qtd);
+    // Lê todos os registros do bloco
+    arquivoEntrada.read(buffer + sizeof(cabecalhoParaBloco), tamanhoRegistro * REGRAS::TAMANHO_BUFFER);
     if (!arquivoEntrada) {
         delete[] buffer;
-        if (log) log->error("Erro ao ler registros do bloco.");
+        throw runtime_error("Erro ao ler registros do bloco.");
         return false;
     }
 
     // Constrói o bloco a partir do buffer (agora com cabeçalho + registros)
-    blocoSaida = BlocoRegistros(buffer, tamanhoBuffer, log);
+    blocoSaida = BlocoRegistros(buffer, tamanhoBuffer);
     blocoSaida.setIdBloco(cabecalhoBloco.id_bloco);
     delete[] buffer;
-
     return true;
 }
 
@@ -92,19 +89,19 @@ bool LeitorBin::lerBlocoAtual(BlocoRegistros& bloco) {
         arquivoEntrada.seekg(pos);
         return false;
     }
-    size_t qtd = static_cast<size_t>(cabecalhoBloco.qtd_registros_validos);
+    // Sempre lê o bloco inteiro
     size_t tamanhoRegistro = Registro::sizeofRegistro();
-    size_t tamanhoBuffer = sizeof(cabecalhoParaBloco) + qtd * tamanhoRegistro;
+    size_t tamanhoBuffer = sizeof(cabecalhoParaBloco) + REGRAS::TAMANHO_BUFFER * tamanhoRegistro;
     char* buffer = new char[tamanhoBuffer];
     memcpy(buffer, &cabecalhoBloco, sizeof(cabecalhoParaBloco));
-    arquivoEntrada.read(buffer + sizeof(cabecalhoParaBloco), tamanhoRegistro * qtd);
+    arquivoEntrada.read(buffer + sizeof(cabecalhoParaBloco), tamanhoRegistro * REGRAS::TAMANHO_BUFFER);
     if (!arquivoEntrada) {
         delete[] buffer;
         arquivoEntrada.clear();
         arquivoEntrada.seekg(pos);
         return false;
     }
-    bloco = BlocoRegistros(buffer, tamanhoBuffer, log);
+    bloco = BlocoRegistros(buffer, tamanhoBuffer);
     bloco.setIdBloco(cabecalhoBloco.id_bloco);
     delete[] buffer;
     // Retorna o ponteiro para a posição original

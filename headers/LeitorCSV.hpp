@@ -5,19 +5,17 @@
 #define LEITOR_CSV
 
 #include "type_dado.hpp"
-#include "Logger.hpp"
 #include "type_block.hpp"
 #include <fstream>
 
 class LeitorCSV {
 private:
     ifstream arquivo;
-    Logger* log;
     string bufferLinha;
     bool cabecalhoIgnorado;
 
 public:
-    LeitorCSV(const char* caminhoCSV, Logger* logger);
+    LeitorCSV(const char* caminhoCSV);
     ~LeitorCSV();
     bool lerProximo(Registro& registroOut);
     bool estaAberto() const;

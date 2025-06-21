@@ -1,8 +1,7 @@
 #include "LeitorBin.hpp"
-#include "Logger.hpp"
 #include "LeitorBinArray.hpp"
 
-LeitorBinArray::LeitorBinArray(int size, Logger *log) : m_size(size), m_log(log)
+LeitorBinArray::LeitorBinArray(int size) : m_size(size)
 {
     m_slots = new LeitorBin *[m_size];
     for (int i = 0; i < m_size; ++i)
@@ -20,23 +19,27 @@ LeitorBinArray::~LeitorBinArray()
     delete[] m_slots;
 }
 
-bool LeitorBinArray::initialize(const std::string &nomeEntrada)
+bool LeitorBinArray::initialize(const std::string &nomeEntrada, int pos)
 {
-    for (int i = 0; i < m_size; ++i)
+
+    try
     {
-        try
-        {
-            m_slots[i] = new LeitorBin(nomeEntrada, m_log);
-        }
-        catch (...)
-        {
-            return false;
-        }
+        m_slots[pos] = new LeitorBin(nomeEntrada);
     }
+    catch (...)
+    {
+        return false;
+    }
+
     return true;
 }
 
-LeitorBin* LeitorBinArray::operator[](int index)
+LeitorBin *LeitorBinArray::operator[](int index)
 {
-    return (index >= 0 && index < m_size) ? m_slots[index] : nullptr;
+    LeitorBin *retorno = nullptr;
+    if (index >= 0 && index < m_size)
+    {
+        retorno = m_slots[index];
+    }
+    return retorno;
 }

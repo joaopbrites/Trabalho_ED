@@ -17,8 +17,13 @@ class Semafaro
         bool setPosVazia(int pos);
         bool setPosInvalida(int pos);
         bool setPosValida(int pos);
+
         bool getPosStatus(int pos, uint8_t &saida);
-        bool getPosVazia(int &saida);
+
+        bool PosVazia(int saida);
+        bool PosInvalida(int saida);
+        bool PosValida(int saida);
+
         bool semafaroInvalido();
         bool setAllInvalid();
 };

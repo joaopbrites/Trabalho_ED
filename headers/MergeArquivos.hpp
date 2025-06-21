@@ -3,24 +3,27 @@
 #ifndef MERGE_ARQUIVOS
 #define MERGE_ARQUIVOS
 
-#include "Logger.hpp"
 #include <string>
 #include "Semafaro.hpp"
 #include "Buffer.hpp"
 #include "GeradorNomeRun.hpp"
+#include "LeitorBinArray.hpp"
+#include "GravarBinBlocos.hpp"
 
 class MergeArquivos {
 private:
-    Logger* log;
+
     int quantidadeDeSlots;
     BufferClass buffer;
-    Semafaro semafaro;
-    
+
+    int carregarBlocosParaBuffer(LeitorBinArray& slots, Semafaro &semafaroArquivos, int tamVariaveis);
+    void processarBuffer(GravadorDeBlocos& gravador, BlocoRegistros& blocoSaida);
 
 public:
-    MergeArquivos(Logger *pLog, int quantidadeDeSlotsBuffer, int TamSemafaro);
+    MergeArquivos(int quantidadeDeSlotsBuffer);
     //int merge(int quantidade, GerarNomeRun nomeEntrada, GerarNomeRun nomeSaida);
     int merge(int quantidade, GerarNomeRun nomeEntrada, GerarNomeRun nomeSaida);
+
 };
 
 #endif
