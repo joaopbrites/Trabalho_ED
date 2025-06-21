@@ -1,4 +1,3 @@
-// leitor_blocos.hpp
 #pragma once
 
 #ifndef LEITOR_BIN
@@ -14,10 +13,9 @@ class LeitorBin {
 private:
     ifstream arquivoEntrada;
     cabecalhoParaArquivo cabecalhoArquivo;
-    Logger* log;
 
 public:
-    LeitorBin(const char* caminho, Logger *pLog);
+    LeitorBin(const string caminho);
     ~LeitorBin();
     bool lerProximoBloco(BlocoRegistros& bloco);
     bool posicionarParaBloco(int indice);

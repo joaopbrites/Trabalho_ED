@@ -1,8 +1,13 @@
 
-
+/data/
 /build/
 /.vscode/
+/input/lms-jun22qtr-csv.csv
 
 *.exe
 *.out
 *.7z
+*.Bin
+*.csv
+
+

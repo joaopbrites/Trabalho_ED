@@ -3,15 +3,17 @@
 #ifndef REGRAS_DE_NEGOCIO
 #define REGRAS_DE_NEGOCIO
 
+#include <cstdint>
+#include <string>
 
 
 using namespace std;
 
 namespace REGRAS
 {
-    constexpr int QUANTIDADE_REGISTROS = 100;
+    constexpr int QUANTIDADE_REGISTROS = 5000;
 
-    constexpr int QUANTIDADES_DE_SLOTS_BUFFER = 4;
+    constexpr int QUANTIDADES_DE_SLOTS_BUFFER = 5;
     constexpr int TAMANHO_BUFFER = QUANTIDADE_REGISTROS / QUANTIDADES_DE_SLOTS_BUFFER;
 
     //ocupacao por bloco é para deixar uma margem que vai ser usada para inserir por posição 
@@ -20,10 +22,10 @@ namespace REGRAS
 
     constexpr int TAMANHO_BUFFER_MARGEM = TAMANHO_BUFFER * OCUPACAO_POR_BLOCO;
 
-    constexpr char NOME_ARQUIVO_ENTRADA[] = "lms-jun22qtr-csv.csv\0";
-    constexpr char NOME_ARQUIVO_BIN_SAIDA[] = "db.dat";
+    constexpr char NOME_ARQUIVO_ENTRADA[] = "./input/lms-jun22qtr-csv.csv\0";
+    constexpr char NOME_ARQUIVO_BIN_SAIDA[] = "./data/db.dat\0";
     
-
+    constexpr const char* CAMINHO_BASE_RUN = "./data/runs/run_etapa_\0";
 
     constexpr int TAMANHO_CAMPO_REG = 100;
 
@@ -35,7 +37,7 @@ namespace FLAGS
     constexpr uint8_t ATIVO = 0x01;
     constexpr uint8_t REMOVIDO = 0x02;
     constexpr uint8_t VAZIO = 0X03;
-
+    constexpr uint8_t  INVALIDO = 0X04;
 }
 
 namespace INVALID_VALUES
